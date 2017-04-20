@@ -1,0 +1,253 @@
+package com.credit.web.controller;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Date;
+import java.util.Objects;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.common.result.ResultJson;
+import com.credit.common.util.RandomUtil;
+import com.credit.common.util.security.DigestUtils;
+import com.credit.common.web.session.UserSession;
+import com.credit.common.web.session.UserSessionFactory;
+import com.credit.entity.Sms;
+import com.credit.entity.User;
+import com.credit.service.EmailService;
+import com.credit.service.SmsService;
+import com.credit.service.UserService;
+import com.credit.web.model.UserLogin;
+
+/**
+ * Created by Michael Chan on 3/8/2017.
+ */
+@Controller
+public class LoginController extends AbstractBaseController
+{
+    @Autowired
+    UserService userService;
+
+    @Autowired
+    EmailService emailService;
+
+    @Autowired
+    private SmsService smsService;
+
+    @RequestMapping(value = "/login", method = RequestMethod.GET)
+    public String signIn()
+    {
+        return "login";
+    }
+
+    @RequestMapping("/logout")
+    public String signOut(HttpSession httpSession)
+    {
+		UserSessionFactory.clearUserSession(httpSession);
+        return "redirect:login";
+    }
+
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson ajaxLogin(@Valid UserLogin userReg, BindingResult bindingResult, HttpServletRequest request)
+    {
+        if (bindingResult.hasErrors())
+        {
+            return new ResultJson().error(ResultJson.STATUS_CODE_PARAM_ERROR, "登陆信息不完整");
+        }
+        try
+        {
+            User user = userService.searchUserByName(userReg.getName());
+            if (user == null)
+            {
+                return new ResultJson().paramError("找不到对应的用户！");
+            }
+            String passwordRecord = user.getPassword();
+            // 重新计算摘要
+            String originalPassword = userReg.getPassword();
+            String md5Password = DigestUtils.md5(DigestUtils.md5(originalPassword.getBytes("UTF-8")).getBytes("UTF-8"));
+            if (!md5Password.equals(passwordRecord))
+            {
+                return new ResultJson().error(ResultJson.STATUS_CODE_FAIL, "您输入的密码错误！");
+            }
+            if (user.getVerifyStateCode() == User.NOT_APPROVED)
+            {
+                return new ResultJson().error(ResultJson.STATUS_CODE_FAIL, "您输入的用户审核未通过！");
+            }
+            if (user.getVerifyStateCode() == User.INDIVIDUAL)
+            {
+                return new ResultJson().error(ResultJson.STATUS_CODE_FAIL, "您输入的用户还在审核中！");
+            }
+            if (user.getVerifyStateCode() == User.APPROVED)
+            {
+                setUserSession(user, request);
+            }
+            return new ResultJson().success();
+        }
+        catch (Exception e)
+        {
+            logger.error("登陆异常", e);
+            return new ResultJson().error(ResultJson.STATUS_CODE_EXCEPTION, "登陆异常");
+        }
+    }
+
+    @RequestMapping(value = "/password", method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson findPassword(String userName)
+    {
+        if(StringUtils.isEmpty(userName))
+        {
+            return new ResultJson().error(ResultJson.STATUS_CODE_PARAM_ERROR, "请输入用户名");
+        }
+        try
+        {
+            User user = userService.searchUserByName(userName);
+            if (user == null)
+            {
+                return new ResultJson().paramError("找不到对应的用户！");
+            }
+            String newPassword = RandomUtil.genRandomString(6);
+            String md5Password = DigestUtils.md5(DigestUtils.md5(newPassword.getBytes("UTF-8")).getBytes("UTF-8"));
+            user.setPassword(md5Password);
+            userService.save(user);
+            //发送邮件找回密码
+            emailService.findPassword(newPassword);
+            return new ResultJson().success(user,"密码已发送到您的邮箱中："+userName);
+        }
+        catch (Exception e)
+        {
+            logger.error("找回密码异常", e);
+            return new ResultJson().error(ResultJson.STATUS_CODE_EXCEPTION, "找回密码异常");
+        }
+    }
+
+    @RequestMapping(value = "/register",method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson register(String phone,String name,String type, String companyName,
+                               String companyPhone, String sms,String password,Integer smsId)
+    {
+        if(StringUtils.isBlank(phone) || StringUtils.isBlank(sms) || StringUtils.isBlank(type)
+                || StringUtils.isBlank(name))
+        {
+            return new ResultJson().error(ResultJson.STATUS_CODE_PARAM_ERROR,ResultJson.STATUS_CODE_PARAM_ERROR_MESSAGE);
+        }
+
+        try
+        {
+            User user = userService.searchUserByPhone(phone);
+            if (user != null)
+            {
+                return new ResultJson().error(ResultJson.STATUS_CODE_FAIL,"注册失败.");
+            }
+
+            Sms oldSms = smsService.searchById(smsId);
+           /* if (oldSms.getSmsState().intValue() != Sms.SMS_STATE_SUCCESSED)
+            {
+                return new ResultJson().error(ResultJson.STATUS_CODE_FAIL,"注册失败.");
+            }*/
+            Date expireDate = new Date();
+            if (expireDate.after(oldSms.getExpireDate()))
+            {
+                return new ResultJson().error(ResultJson.STATUS_CODE_REQUEST_EXPIRE,"短信验证码已过期.");
+            }
+            if (!oldSms.getSmsCode().equals(sms))
+            {
+                return new ResultJson().error(ResultJson.STATUS_CODE_PARAM_ERROR,"短信验证码不正确.");
+            }
+
+            if(type.equals("1"))
+            {
+                if (StringUtils.isBlank(companyName))
+                {
+                    return new ResultJson().error(ResultJson.STATUS_CODE_FAIL,"企业名称不能为空.");
+                }
+                if (StringUtils.isBlank(companyPhone))
+                {
+                    return new ResultJson().error(ResultJson.STATUS_CODE_FAIL,"企业电话不能为空.");
+                }
+            }
+            Integer integerType = Integer.valueOf(type);
+            User user1 = new User();
+            user1.setUserName(name);
+            user1.setUserNickName(name);
+            user1.setPhone(phone);
+            user1.setPassword(password);
+            user1.setRegTime(new Date());
+            String md5Password = DigestUtils.md5(DigestUtils.md5(password.getBytes("UTF-8")).getBytes("UTF-8"));
+            user1.setPassword(md5Password);
+            user1.setUserType(integerType);
+            userService.save(user1);
+        }
+        catch (ServiceException e)
+        {
+            logger.error("注册失败", e);
+            return new ResultJson().error();
+        } catch (UnsupportedEncodingException e)
+        {
+            logger.error("注册失败", e);
+            return new ResultJson().error();
+        } catch (Exception e)
+        {
+            logger.error("注册失败", e);
+            return new ResultJson().error();
+        }
+        return new ResultJson().success();
+    }
+
+    @RequestMapping(value = "/reg", method = RequestMethod.GET)
+    public String signUp()
+    {
+        return "register";
+    }
+
+    public boolean isLogined(HttpServletRequest request) throws Exception
+    {
+        String uri = request.getServletPath();
+        if (request.getPathInfo() != null)
+        {
+            uri = uri + request.getPathInfo();
+        }
+        logger.debug("request uri : {}", uri);
+        UserSession userSession = UserSessionFactory.getUserSession(request);
+        if (userSession == null)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    @RequestMapping(value = "/exist",method = RequestMethod.GET)
+    @ResponseBody
+    public boolean isPhoneExist(String phone)
+    {
+        try
+        {
+            User user = userService.searchUserByPhone(phone);
+            if (user != null)
+            {
+                return false;
+            }
+        } catch (ServiceException e)
+        {
+            logger.error("",e.getMessage());
+            return true;
+        }
+        return true;
+    }
+
+    @RequestMapping("/dun/slide")
+    public String slideTest()
+    {
+        return "slide";
+    }
+}

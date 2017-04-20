@@ -1,0 +1,6 @@
+ALTER TABLE tb_site_resource add resource_status INT NOT NULL DEFAULT 0;
+ALTER TABLE tb_user_auth_ip add user_id INT NOT NULL DEFAULT 0;
+
+ALTER TABLE tb_user_permission ADD daily_times INT(11) NOT NULL DEFAULT 0, ADD yearly_times INT(11) NOT NULL DEFAULT 0;
+ALTER TABLE tb_user ADD company_name VARCHAR(255) ;
+ALTER TABLE tb_user MODIFY  (verify_state_code INT(11) NOT NULL DEFAULT 1;

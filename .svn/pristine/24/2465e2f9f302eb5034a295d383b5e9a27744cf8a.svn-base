@@ -1,0 +1,25 @@
+package com.credit.repository;
+
+import com.credit.base.JpaBaseRepository;
+import com.credit.entity.UserCallDetailsHistory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.repository.Query;
+
+import java.util.List;
+
+/**
+ * Created by Michael Chan on 3/21/2017.
+ */
+public interface UserCallDetailsRepository extends JpaBaseRepository<UserCallDetailsHistory,Integer>
+{
+    @Query(value = "FROM UserCallDetailsHistory WHERE userId =?1 AND phone=?2 AND idcard=?3  GROUP BY callDetailsPath")
+    List<UserCallDetailsHistory> findByUserIdAndPhoneAndIdcard(Integer userId,String phone,String idcard);
+
+    UserCallDetailsHistory findOneByUuid(String uuid);
+
+    @Query(value = "SELECT u.fileMd5Digest FROM UserCallDetailsHistory u",nativeQuery = true)
+    List<String> findAllFileMd5Digest();
+
+    @Query(value = "SELECT u.callDetailsPath FROM UserCallDetailsHistory u WHERE fileMd5Digest =?1 GROUP BY fileMd5Digest")
+    String findFilePath(String fileMd5Digest);
+}

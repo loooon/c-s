@@ -1,0 +1,35 @@
+package com.credit.web.util;
+
+import java.util.*;
+
+import com.credit.entity.CallDetails;
+import com.credit.web.model.AttributeTag;
+import com.credit.web.model.CallDetailsModel;
+import com.credit.web.model.GrayscaleModel;
+
+/**
+ * Created by wangjunling on 2017/3/13.
+ */
+public class AttributeTagUtil
+{
+    public static void buildGrayscaleModel(CallDetailsModel callDetailsModel)
+            throws Exception
+    {
+
+
+    }
+
+    private static void calculateAttributeTag(Map<String,Object> statMap, CallDetails callDetails, AttributeTag attributeTag)
+    {
+
+
+    }
+
+    private static boolean isFirstTierCity(String addr)
+    {
+        return addr != null && (addr.contains("北京") || addr.contains("上海") || addr.contains("广州") || addr.contains("深圳"));
+    }
+
+	public static void main(String[] args) {
+	}
+}

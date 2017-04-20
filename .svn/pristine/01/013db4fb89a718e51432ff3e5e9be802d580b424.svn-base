@@ -1,0 +1,25 @@
+package com.credit.service.impl;
+
+import com.credit.entity.OrganizationType;
+import com.credit.repository.OrganizationTypeRepository;
+import com.credit.service.OrganizationTypeService;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+/**
+ * Created by Michael Chan on 3/10/2017.
+ */
+@Service("organizationTypeService")
+public class OrganizationTypeServiceImpl implements OrganizationTypeService<OrganizationType>
+{
+    @Resource
+    private OrganizationTypeRepository organizationTypeRepository;
+
+    @Override
+    public List<OrganizationType> findAll()
+    {
+        return organizationTypeRepository.findAll();
+    }
+}

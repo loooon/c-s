@@ -1,0 +1,25 @@
+package com.credit.service.impl;
+
+import com.credit.entity.UserAuthIp;
+import com.credit.repository.UserAuthIpRepository;
+import com.credit.service.UserAuthIpService;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+/**
+ * Created by Michael Chan on 3/14/2017.
+ */
+@Service("userAuthIpService")
+public class UserAuthIpServiceImpl implements UserAuthIpService<UserAuthIp>
+{
+    @Resource
+    UserAuthIpRepository userAuthIpRepository;
+
+    @Override
+    public List<String> searchAuthIpsByVKey(String vKey)
+    {
+        return userAuthIpRepository.findByVKey(vKey);
+    }
+}

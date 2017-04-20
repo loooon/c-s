@@ -1,0 +1,341 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <meta name="theme-color" content="#ffffff"> 
+	<title>催收黄页-凭安信用</title>
+</head>
+<body>
+
+<div>
+	<div id="map_container" style="width:100%;height: 970px;"></div>
+</div>
+<script src="/resources/js/lib/jquery-3.1.1.min.js"></script>
+<script src="/resources/js/lib/echarts.min.js"></script>
+<script src="/resources/js/lib/china.js"></script>
+<script type="text/javascript">
+    var graph = echarts.init(document.getElementById("map_container"));
+    var geoCoordMap = {
+        '上海': [121.4648,31.2891],
+        '新疆': [87.9236,43.5883],
+        '甘肃': [103.5901,36.3043],
+        '北京': [116.4551,40.2539],
+        '江苏': [118.8062,31.9208],
+        '广西': [108.479,23.1152],
+        '江西': [116.0046,28.6633],
+        '安徽': [117.29,32.0581],
+        '内蒙古': [111.4124,40.4901],
+        '黑龙江': [127.9688,45.368],
+        '天津': [117.4219,39.4189],
+        '广东': [113.5107,23.2196],
+        '四川': [103.9526,30.7617],
+        '西藏': [91.1865,30.1465],
+        '浙江': [119.5313,29.8773],
+        '湖北': [114.3896,30.6628],
+        '辽宁': [123.1238,42.1216],
+        '山东': [117.1582,36.8701],
+        '海南': [110.3893,19.8516],
+        '河北': [114.4995,38.1006],
+        '福建': [119.4543,25.9222],
+        '青海': [101.4038,36.8207],
+        '陕西': [109.1162,34.2004],
+        '河南': [113.4668,34.6234],
+        '重庆': [107.7539,30.1904],
+        '宁夏': [106.3586,38.1775],
+        '吉林': [125.8154,44.2584],
+        '湖南': [113.0823,28.2568],
+        '山西':[112.3352,37.9413],
+        '云南': [102.9199,25.4663],
+        '贵州': [106.6992,26.7682],
+    };
+    var convertData = function (data) {
+        var res = [];
+        for (var i = 0; i < data.length; i++) {
+            var dataItem = data[i];
+            var fromCoord = geoCoordMap[dataItem[0].name];
+            var toCoord = geoCoordMap[dataItem[1].name];
+            var fromData = dataItem[0].value;
+            if (fromCoord && toCoord && fromData) {
+                res.push({
+                    fromName: dataItem[0].name,
+                    toName: dataItem[1].name,
+                    fromData:dataItem[0].value,
+                    coords: [fromCoord, toCoord,fromData]
+                });
+            }
+        }
+        return res;
+    };
+    var planePath = 'path://M1705.06,1318.313v-89.254l-319.9-221.799l0.073-208.063c0.521-84.662-26.629-121.796-63.961-121.491c-37.332-0.305-64.482,36.829-63.961,121.491l0.073,208.063l-319.9,221.799v89.254l330.343-157.288l12.238,241.308l-134.449,92.931l0.531,42.034l175.125-42.917l175.125,42.917l0.531-42.034l-134.449-92.931l12.238-241.308L1705.06,1318.313z';
+    $(document).ready(function () {
+
+        updateDistData();
+        setInterval(updateDistData,8000);
+        /*function walk(f,time){
+            setTimeout(function(){f();walk();},time);
+        }
+        walk(updateDistData,8000);*/
+    });
+
+    var updateDistData =function ()
+    {
+        $.ajax({
+            url: "/dun/dist",
+            method: "post",
+//        data: formData,
+            dataType: 'json',
+            async: true,
+            success: function (data)
+            {
+                if(data.result=200)
+                {
+                    dist_data_map(data.data);
+                }
+                /*if(data.result=500)
+                 {
+
+                 }*/
+            },
+            error:function ()
+            {
+
+            }
+        });
+    }
+
+
+    var dist_data_map = function (data)
+    {
+        var data =[data];
+
+        var convert_data=convertData(data[0]);
+        var color = ['#a6c84c', '#ffa022', '#46bee9'];
+        var series = [{
+            name: '飞机飞入为被催收号码区域',
+            type: 'lines',
+            zlevel: 1,
+            effect: {
+                show: true,
+                period: 6,
+                trailLength: 0.7,
+                color: '#fff',
+                symbolSize: 3
+            },
+            lineStyle: {
+                normal: {
+                    color: color[2],
+                    width: 0,
+                    curveness: 0.2
+                }
+            },
+            data: convert_data
+        },
+            {
+                name: '上海',
+                type: 'lines',
+                zlevel: 2,
+                symbol: ['none', 'arrow'],
+                symbolSize: 10,
+                tooltip: {
+                    show: false
+                },
+                effect: {
+                    show: true,
+                    period: 6,
+                    trailLength: 0,
+                    symbol: planePath,
+                    symbolSize: 15
+                },
+                lineStyle: {
+                    normal: {
+//                            color: color[2],
+                        color: function (params)
+                        {
+                            if (params.data.fromData <= 30)
+                            {
+                                params.color = 'green';
+                                return params.color;
+                            }
+                            else if (params.data.fromData <= 50)
+                            {
+                                params.color = 'orange';
+                                return params.color;
+                            }
+                            else if (params.data.fromData <= 70)
+                            {
+                                params.color = 'blue';
+                                return params.color;
+                            }
+                            else if (params.data.fromData <= 90)
+                            {
+                                params.color = 'pink';
+                                return params.color;
+                            }
+                            else
+                            {
+                                params.color = 'red'
+                                return params.color;
+                            }
+                        },
+                        width: 1,
+                        opacity: 0.6,
+                        curveness: 0.2
+                    }
+                },
+                data: convert_data
+            },
+            {
+                name: '小飞机表示催收，发出点为催收电话区域，飞入点为逾期用户所在逾期',
+                type: 'effectScatter',
+                coordinateSystem: 'geo',
+                zlevel: 2,
+                rippleEffect: {
+                    period: 6,
+                    scale: 5,
+                    brushType: 'stroke'
+//                        brushType: 'fill'
+                },
+
+
+                label: {
+                    normal: {
+                        show: false,
+                        position: 'right',
+                        formatter: '{b}'
+                    }
+                },
+                symbolSize: function (val)
+                {
+//                        return val[2] / 8;
+                    return val[2] / 4;
+                },
+                itemStyle: {
+                    normal: {
+                        color: function (params)
+                        {
+                            if (params.value[2] <= 30)
+                            {
+                                params.color = 'green';
+                                return params.color;
+                            }
+                            else if (params.value[2] <= 50)
+                            {
+                                params.color = 'orange';
+                                return params.color;
+                            }
+                            else if (params.value[2] <= 70)
+                            {
+                                params.color = 'blue';
+                                return params.color;
+                            }
+                            else if (params.value[2] <= 90)
+                            {
+                                params.color = 'pink';
+                                return params.color;
+                            }
+                            else
+                            {
+                                params.color = 'red'
+                                return params.color;
+                            }
+                        }
+                    }, emphasis: {
+//                            opacity:0.5,
+                        borderWidth: 2,
+//                            borderColor:'purple',
+                        borderType: 'dashed',
+                        shadowBlur: 20,
+//                            shadowColor:'red',
+                    },
+                },
+                data: data[0].map(function (dataItem)
+                {
+                    return {
+                        name: dataItem[0].name,
+                        value: geoCoordMap[dataItem[0].name].concat([dataItem[0].value])
+                    };
+                })
+            }];
+      /*  [data].forEach(function (item, i)
+        {
+            series.push();
+        });*/
+
+
+        option = {
+//            backgroundColor: '#404a59',
+            backgroundColor: 'RGB(60,130,241)',
+//            backgroundColor: '#f0f0f0',
+            title : {
+                text: '催收号码分布热点图',
+                subtext: '小飞机表示催收，发出点为催收电话区域，飞入点为逾期用户所在逾期',
+                left: 'center',
+                top:'40',
+                subtextStyle:{
+                    color:'#fff',
+                    fontWeight:600,
+                    top: '20%',
+                    left: '40%',
+                },
+                textStyle : {
+                    color: '#fff'
+                }
+            },
+            tooltip : {
+                show:false,
+                trigger: 'item',
+                formatter: function (params)
+                {
+                    return '<em style="color:' + params.color + ';font-size:20px">' + params.data.name + '</em>' +
+                        ',共呼叫:' +
+                        '<em style="color:' + params.color + ';font-size:20px">' + params.data.value[2] + '次</em>';
+                }
+            },
+            legend: {
+                orient: 'vertical',
+                top: '10%',
+                left: '40%',
+//                data:['小飞机表示催收，发出点为催收电话区域，飞入点为逾期用户所在逾期'],
+                textStyle: {
+                    color: '#fff'
+                },
+//                selectedMode: 'single'
+            },
+            geo: {
+                map: 'china',
+                label: {
+                    emphasis: {
+                        show: true
+                    }
+                },
+                roam: true,
+                itemStyle: {
+                    normal: {
+                        areaColor: '#323c48',
+//                        areaColor: 'RGB(60,130,241)',
+//                        areaColor: 'RGB(28,76,153)',
+                        borderColor: '#404a59'
+//                        borderColor: 'purple'
+                    },
+                    emphasis: {
+                        areaColor: '#2a333d'
+//                        areaColor: 'white'
+                    }
+                }
+            },
+            series: series
+        };
+        graph.setOption(option,true);
+    };
+
+
+</script>
+</body>
+
+</html>

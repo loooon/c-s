@@ -1,0 +1,39 @@
+package com.credit.service.impl;
+
+import com.credit.entity.DunNumberSearchHistory;
+import com.credit.entity.NumberTag;
+import com.credit.repository.DunNumberSearchHistoryRepository;
+import com.credit.service.DunNumberSearchHistoryService;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.Date;
+
+/**
+ * Created by Michael Chan on 3/27/2017.
+ */
+@Service("dunNumberSearchHistoryService")
+public class DunNumberSearchHistoryServiceImpl implements DunNumberSearchHistoryService<DunNumberSearchHistory>
+{
+    @Resource
+    DunNumberSearchHistoryRepository dunNumberSearchHistoryRepository;
+
+    @Override
+    public void saveSearchHistory(String phone,String fromIp,NumberTag numberTag)
+    {
+        Date searchTime = new Date();
+        DunNumberSearchHistory dunNumberSearchHistory = new DunNumberSearchHistory();
+        dunNumberSearchHistory.setSearch_ip(fromIp);
+        dunNumberSearchHistory.setSearchPhone(phone);
+        if (numberTag != null)
+        {
+            dunNumberSearchHistory.setOrgType(numberTag.getOrgTypeId());
+            dunNumberSearchHistory.setOrgTypeName(numberTag.getOrgName());
+            dunNumberSearchHistory.setDemandType(numberTag.getDemandTypeId());
+            dunNumberSearchHistory.setDemandTypeName(numberTag.getDemandName());
+        }
+        dunNumberSearchHistory.setSearchTime(searchTime);
+        dunNumberSearchHistory.setUpdateTime(new Date());
+        dunNumberSearchHistoryRepository.save(dunNumberSearchHistory);
+    }
+}

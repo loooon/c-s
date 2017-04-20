@@ -1,0 +1,126 @@
+package com.credit.web.controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import com.credit.common.result.ResultJson;
+import com.credit.entity.UserCallDetailsHistory;
+import com.credit.service.CallDetailSearchHistoryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.credit.common.web.session.UserSession;
+import com.credit.common.web.session.UserSessionFactory;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+/**
+ * Created by Michael Chan on 3/8/2017.
+ */
+@Controller()
+@RequestMapping("/user")
+public class IndexController extends AbstractBaseController
+{
+    private final Integer FIRST_PAGE = Integer.valueOf(0);
+    private final Integer DEFAULT_PAGE_SIZE = Integer.valueOf(5);
+    @Autowired
+    CallDetailSearchHistoryService<UserCallDetailsHistory> callDetailSearchHistoryService;
+
+    @RequestMapping("/index")
+    public String index()
+    {
+        return "user/user_index";
+    }
+
+    @RequestMapping("/digest/history")
+    public String searchHistory()
+    {
+        return "user/digest/history";
+    }
+
+    @RequestMapping("/search/personal")
+    public String searchPersonal(HttpServletRequest request,Model model)
+    {
+        Page<UserCallDetailsHistory> userCallDetailsHistories = null;
+        HttpSession httpSession = request.getSession();
+        UserSession userSession = UserSessionFactory.getUserSession(httpSession);
+        Integer userId = userSession.getUserId();
+        try
+        {
+            Sort sort = new Sort(Sort.Direction.DESC, "createDate");
+            Pageable pageable = new PageRequest(FIRST_PAGE, DEFAULT_PAGE_SIZE, sort);
+            long s =System.currentTimeMillis();
+            userCallDetailsHistories = callDetailSearchHistoryService
+                    .searchUserCallDetailHistory(userId, pageable);
+            long end =System.currentTimeMillis();
+            System.out.println("##############################");
+
+            System.out.println(end-s);
+            System.out.println("##############################");
+            model.addAttribute("perPageCount",DEFAULT_PAGE_SIZE);
+            if (userCallDetailsHistories.getTotalPages() == 0)
+            {
+                model.addAttribute("userCallDetailsHistories", null);
+                model.addAttribute("totalData", null);
+                return "user/search/personal";
+            }
+            model.addAttribute("userCallDetailsHistories", userCallDetailsHistories);
+            model.addAttribute("totalData", userCallDetailsHistories.getTotalElements());
+            return "user/search/personal";
+        }
+        catch (Exception e)
+        {
+            logger.error("查询记录错误", e);
+            return "login";
+        }
+    }
+
+    @RequestMapping("/account/charge")
+    public String searchAccountChargeHistory()
+    {
+        return "user/account/charge_history";
+    }
+
+    @RequestMapping("/account/consume")
+    public String searchAccountConsumeHistory()
+    {
+        return "user/account/consume_history";
+    }
+
+    @RequestMapping("/account/password")
+    public String modifyAccountPassword()
+    {
+        return "user/account/modify_password";
+    }
+
+    @RequestMapping("/notice")
+    public String searchNotice()
+    {
+        return "user/notice";
+    }
+
+    @RequestMapping("/support")
+    public String searchSupport()
+    {
+        return "user/support";
+    }
+
+    @RequestMapping(value = "/history" ,method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson getReportHistory(Integer pageCount, Integer pageSize, HttpSession httpSession)
+    {
+        UserSession userSession = UserSessionFactory.getUserSession(httpSession);
+        Integer userId = userSession.getUserId();
+        Sort sort = new Sort(Sort.Direction.DESC, "createDate");
+        Pageable pageable = new PageRequest(pageCount == null?0:pageCount - 1, pageSize, sort);
+        Page<UserCallDetailsHistory> userCallDetailsHistories = callDetailSearchHistoryService
+                .searchUserCallDetailHistory(userId, pageable);
+        return new ResultJson().success(userCallDetailsHistories);
+    }
+}

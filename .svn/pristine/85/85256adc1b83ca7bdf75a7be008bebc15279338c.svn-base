@@ -1,0 +1,154 @@
+package com.credit.service.cache;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.log4j.spi.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.credit.common.cache.AbstractCache;
+import com.credit.common.cache.CacheFactory;
+import com.credit.common.context.BeanFactory;
+import com.credit.common.exception.ServiceException;
+import com.credit.common.util.Validator;
+import com.credit.entity.PhoneSegmentInfo;
+import com.credit.service.PhoneSegmentInfoService;
+
+/**
+ * Created by Michael Chan on 3/9/2017.
+ */
+public class PhoneSegmentInfoCache
+{
+    private static final Logger logger = LoggerFactory.getLogger(PhoneSegmentInfoCache.class);
+
+    private static final String SERVICE_NAME = "phoneSegmentInfoService";
+
+    private PhoneSegmentInfoService phoneSegmentInfoService;
+
+    private static final String CACHE_NAME = "phone_segment_info";
+
+    private AbstractCache<String, PhoneSegmentInfo> cache;
+
+    private PhoneSegmentInfoCache()
+    {
+        try
+        {
+            phoneSegmentInfoService = BeanFactory.getBean(SERVICE_NAME, PhoneSegmentInfoService.class);
+        }
+        catch (Exception e)
+        {
+            phoneSegmentInfoService = null;
+            logger.error("初始化phoneSegmentInfoService失败!", e);
+        }
+
+        try
+        {
+            cache = CacheFactory.getInstance().newCache(30, TimeUnit.DAYS, 100000);
+        }
+        catch (Exception e)
+        {
+            cache = null;
+            logger.error("初始化phoneSegmentInfoCache失败!", e);
+        }
+    }
+
+    private static class NumberTagHolder
+    {
+        private static final PhoneSegmentInfoCache instance = new PhoneSegmentInfoCache();
+    }
+
+    public static PhoneSegmentInfoCache getInstance()
+    {
+        return PhoneSegmentInfoCache.NumberTagHolder.instance;
+    }
+
+    public void reloadAll() throws ServiceException
+    {
+        try
+        {
+            if (null == phoneSegmentInfoService)
+            {
+                logger.error("初始化phoneSegmentInfoCache失败!");
+                return;
+            }
+
+            cache.invalidAllCache();
+
+            List<PhoneSegmentInfo> phoneSegmentInfoList = phoneSegmentInfoService.searchAll();
+
+            if (null != phoneSegmentInfoList)
+            {
+				for (PhoneSegmentInfo phoneSegmentInfo : phoneSegmentInfoList)
+				{
+					cache.cache(phoneSegmentInfo.getPhoneSegment(),phoneSegmentInfo);
+				}
+            }
+
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "重新加载号码标签信息失败", e);
+        }
+    }
+
+    public List<PhoneSegmentInfo> getPhoneSegmentInfoCacheData() throws ServiceException
+    {
+        try
+        {
+            if (cache.size() == 0)
+            {
+                reloadAll();
+            }
+            return (List<PhoneSegmentInfo>) cache.getAllCaches().get(CACHE_NAME);
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "从缓存中加载PhoneSegmentInfo失败", e);
+        }
+    }
+
+    public String getPhoneOwnership(String phone) throws ServiceException
+    {
+        if (!Validator.isMobile(phone))
+        {
+            return "";
+        }
+        try
+        {
+			String phoneSegment = phone.substring(0, 7);
+			PhoneSegmentInfo phoneSegmentInfo = cache.get(phoneSegment);
+			if (phoneSegmentInfo!=null)
+			{
+				return phoneSegmentInfo.getProvince()+phoneSegmentInfo.getCity();
+			}
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "从缓存中加载PhoneSegmentInfo失败", e);
+        }
+        return "";
+    }
+
+    public String getOperator(String phone) throws ServiceException
+    {
+        if (!Validator.isMobile(phone))
+        {
+            return "";
+        }
+        try
+        {
+			String phoneSegment = phone.substring(0, 7);
+			PhoneSegmentInfo phoneSegmentInfo = cache.get(phoneSegment);
+			if (phoneSegmentInfo!=null)
+			{
+				return phoneSegmentInfo.getOperator();
+			}
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "从缓存中加载PhoneSegmentInfo失败", e);
+        }
+        return "";
+    }
+}

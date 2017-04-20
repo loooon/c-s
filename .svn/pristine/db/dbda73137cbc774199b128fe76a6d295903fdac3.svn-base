@@ -1,0 +1,12 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<div class="layout navbar">
+    <a href="/dun/index" class="logo">
+        <img src="/resources/img/dun/logo.png" alt="">
+    </a>
+    <ul>
+        <li><a href="/dun/search">查验催收号码</a></li>
+        <li><a href="/dun/auth">看看他有没有被催收</a></li>
+        <li><a href="/dun/company">集团用户通道</a></li>
+        <li><a href="/dun/batch">批量查验催收号码</a></li>
+    </ul>
+</div>

@@ -1,0 +1,95 @@
+package com.credit.web.util;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.CallDetails;
+import com.credit.enumeration.WorkEnum;
+import com.credit.web.model.AttributeTag;
+import com.credit.web.model.CallDetailsModel;
+import com.credit.web.model.GrayscaleModel;
+
+/**
+ * Created by wangjunling on 2017/3/10.
+ */
+public class GrayscaleUtil
+{
+
+    private static Logger logger = LoggerFactory.getLogger(GrayscaleUtil.class);
+
+    public static void buildGrayscaleModel(GrayscaleModel grayscaleModel, List<CallDetails> callDetailsList) throws Exception
+    {
+		AttributeTag attributeTag = grayscaleModel.getAttributeTag();
+		for (CallDetails details : callDetailsList)
+		{
+			calculateAttributeTag(details,attributeTag);
+		}
+
+	}
+	private static void calculateAttributeTag(CallDetails callDetails,AttributeTag attributeTag)
+	{
+
+	}
+
+	public static void buildAttributeTag(AttributeTag attributeTag, CallDetailsModel callDetailsModel)
+	{
+		int monthSize = callDetailsModel.getMonthSet().size();
+		//设置联系人总数
+		attributeTag.setContactCount(callDetailsModel.getContactSet().size());
+		int workDayTime = callDetailsModel.getWorkDayCallDetailsList().size();
+		int restDayTime = callDetailsModel.getRestDayCallDetailsList().size();
+
+		//设置通话频率最高的时间段(休息日，工作日)
+		if (workDayTime >= restDayTime)
+		{
+			attributeTag.setMaxCallTimeSlot(WorkEnum.WORK_DAY.getText());
+		}
+		else
+		{
+			attributeTag.setMaxCallTimeSlot(WorkEnum.REST_DAY.getText());
+		}
+		if (monthSize>0)
+		{
+			attributeTag.setMonthAvgContactCount(callDetailsModel.getContactSet().size()/monthSize);
+		}
+		List<String> callTimeList = callDetailsModel.getCallTimeList();
+		//排序
+		Collections.sort(callTimeList);
+		long[] intervals = new long[callTimeList.size()-1];
+		int index = 0;
+		int intervalCount=0;
+		//获取是呼叫时间的时间间隔
+		for (int i = 1; i < callTimeList.size(); i++)
+		{
+			long interval = TimeUtil.getDateTime(callTimeList.get(i)) - TimeUtil.getDateTime(callTimeList.get(i - 1));
+			intervals[index++]=interval;
+			intervalCount+=interval;
+		}
+		Arrays.sort(intervals);
+		attributeTag.setMinCallTimeInterval(TimeUtil.getTimeInterval(intervals[0]));
+		attributeTag.setMaxCallTimeInterval(TimeUtil.getTimeInterval(intervals[intervals.length-1]));
+		attributeTag.setAvgCallTimeInterval(TimeUtil.getTimeInterval(intervalCount/intervals.length));
+	}
+
+
+	public static void main(String[] args)
+	{
+		String detailJson="[ { \"duration\":\"16\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-29 18:23:53\", \"call_model\":\"被叫\", \"call_addr\":\"上海\" }, { \"duration\":\"153\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"4008208788\", \"call_time\":\"2016-11-30 05:29:47\", \"call_model\":\"主叫\", \"call_addr\":\"上海\" } ]";
+		List<CallDetails> callDetailss = JSONArray.parseArray(detailJson, CallDetails.class);
+		AttributeTag tag = new AttributeTag();
+		try {
+			buildAttributeTag(tag,new CallDetailsModel(callDetailss));
+			System.out.println(JSON.toJSONString(tag));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+}

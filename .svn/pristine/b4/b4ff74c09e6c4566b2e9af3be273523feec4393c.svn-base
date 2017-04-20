@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemesh>
+    <!--默认情况下， sitemesh 只对 HTTP 响应头中 Content-Type 为 text/html 的类型进行拦截和装饰， 我们可以添加更多的 mime 类型 -->
+    <mime-type>text/html</mime-type>
+    <mime-type>application/vnd.wap.xhtml+xml</mime-type>
+    <mime-type>application/xhtml+xml</mime-type>
+
+    <mapping path="/**" decorator="/WEB-INF/layouts/dun.jsp"/>
+    <!-- 指明满足“/*”的页面，将被“/WEB-INF/views/decorators/decorator.html”所装饰 -->
+    <mapping path="/user/**" decorator="/WEB-INF/layouts/default.jsp"/>
+
+    <!-- 指明满足“/exclude.jsp*”的页面，将被排除，不被装饰 -->
+    <mapping path="/resources/*" exclue="true"/>
+    <mapping path="/source/*" exclue="true"/>
+    <mapping path="*.html" exclue="true"/>
+    <mapping path="/login" exclue="true"/>
+    <mapping path="/service*" exclue="true"/>
+    <mapping path="/user/grayscale/report" exclue="true"/>
+    <mapping path="/user/grayscale/history" exclue="true"/>
+    <mapping path="/dun/m/*" exclue="true"/>
+    <mapping path="/*.jsp" exclue="true"/>
+    <mapping path="/kapt**" exclue="true"/>
+    <mapping path="/dun/kapt**" exclue="true"/>
+    <mapping path="/exist" exclue="true"/>
+    <mapping path="/sms/code" exclue="true"/>
+    <mapping path="/reg*" exclue="true"/>
+
+    <mapping path="/dun/slide" exclue="true"/>
+</sitemesh>

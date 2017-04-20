@@ -1,0 +1,2 @@
+ALTER TABLE tb_admin MODIFY  create_time  timestamp not null DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE tb_admin MODIFY  update_time  timestamp not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;

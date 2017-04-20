@@ -1,0 +1,28 @@
+package com.credit.service;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.entity.User;
+
+import java.util.List;
+
+/**
+ * Created by wangjunling on 2017/3/7.
+ */
+public interface UserService<T extends User>
+{
+	User save(User user);
+
+	User search(Integer id);
+
+	User searchUserByName(String name) throws ServiceException;
+
+	User searchUserByPhone(String phone) throws ServiceException;
+
+	User updateUserLoginTime(User user) throws ServiceException;
+
+	User searchByVkey(String vkey);
+
+	User update(User user);
+
+	List<User> searchAll();
+}

@@ -1,0 +1,51 @@
+$(document).ready(function () {
+    var options = {
+        useEasing : true,
+        useGrouping : true,
+        separator : ',',
+        decimal : '.',
+        prefix : '',
+        suffix : ''
+    };
+    updateCount();
+    setInterval(updateCount,5000);
+});
+var countUp;
+var coverageCountUp;
+var pingan_dun_total;
+var options = {
+    useEasing : true,
+    useGrouping : true,
+    separator : ',',
+    decimal : '.',
+    prefix : '',
+    suffix : ''
+};
+function updateCount() {
+    $.ajax({
+        url: "/dun/count",
+        method: "POST",
+        dataType: "json",
+        success: function (data) {
+            if (data.result == 200) {
+                var data = data.data;
+                var count = data.find;
+                pingan_dun_total = data.find;
+                var coverageCount = data.coverage;
+                if(countUp){
+                    countUp.update(count);
+                }else{
+                    countUp  = new CountUp("dunCount", 0, count, 0, 1.2, options);
+                }
+                countUp.start();
+
+                if(coverageCountUp){
+                    coverageCountUp.update(coverageCount);
+                }else{
+                    coverageCountUp  = new CountUp("coverageCount", 0, coverageCount, 0, 1.2, options);
+                }
+                coverageCountUp.start();
+            }
+        }
+    })
+}

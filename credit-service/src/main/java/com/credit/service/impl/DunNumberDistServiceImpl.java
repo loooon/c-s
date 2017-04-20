@@ -1,0 +1,49 @@
+package com.credit.service.impl;
+
+import com.credit.entity.DunNumberDist;
+import com.credit.repository.DunNumberDistRepository;
+import com.credit.service.DunNumberDistService;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+/**
+ * Created by Michael Chan on 3/24/2017.
+ */
+@Service("dunNumberDistService")
+public class DunNumberDistServiceImpl implements DunNumberDistService<DunNumberDist>
+{
+    @Resource
+    DunNumberDistRepository dunNumberDistRepository;
+
+    @Override
+    public List<DunNumberDist> searchAllByUserPhone(String userPhone)
+    {
+        return dunNumberDistRepository.findAllByUserPhone(userPhone);
+    }
+
+    @Override
+    public List<String> searchAllUserPhones()
+    {
+        return dunNumberDistRepository.findAllUserPhones();
+    }
+
+    @Override
+    public List<DunNumberDist> searchByIds(List<Integer> ids)
+    {
+        return dunNumberDistRepository.findAllByIdIn(ids);
+    }
+
+    @Override
+    public List<DunNumberDist> searchAll()
+    {
+        return dunNumberDistRepository.findAll();
+    }
+
+    @Override
+    public List<DunNumberDist> searchRandomDist(List<String> fromProvinces, List<String> toProvinces)
+    {
+        return dunNumberDistRepository.findAllByCallFromProvinceInAndUserPhoneProvinceIn(fromProvinces,toProvinces);
+    }
+}

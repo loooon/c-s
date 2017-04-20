@@ -1,0 +1,47 @@
+package com.credit.web.listener;
+
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.service.cache.NumberTagCache;
+import com.credit.service.cache.PhoneSegmentInfoCache;
+
+/**
+ * Created by wangjunling on 2017/3/16.
+ */
+public class InitCacheListener implements ServletContextListener
+{
+    private Logger logger = LoggerFactory.getLogger(InitCacheListener.class);
+
+    @Override
+    public void contextInitialized(ServletContextEvent servletContextEvent)
+    {
+        try
+        {
+            NumberTagCache.getInstance().reloadAll();
+        }
+        catch (ServiceException e)
+        {
+            logger.error("初始化NumberTagCache失败", e);
+        }
+
+        try
+        {
+            PhoneSegmentInfoCache.getInstance().reloadAll();
+        }
+        catch (ServiceException e)
+        {
+            logger.error("初始化PhoneSegmentInfoCache失败", e);
+        }
+    }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent servletContextEvent)
+    {
+
+    }
+}

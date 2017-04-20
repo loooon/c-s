@@ -1,0 +1,57 @@
+package com.credit.enumeration;
+
+import org.xml.sax.ext.Attributes2;
+
+import java.util.Map;
+
+/**
+ * Created by Michael Chan on 3/16/2017.
+ */
+public enum ActiveEnum
+{
+    ACTIVE("活跃", 12.8), NORMAL("一般", 6.2), INACTIVE("不活跃", 0.0);
+
+    private String name;
+
+    private Double code;
+
+    ActiveEnum(String name, Double code)
+    {
+        this.name = name;
+        this.code = code;
+    }
+
+    public static String getActive(double avgContact)
+    {
+        if (ACTIVE.getCode() <= avgContact)
+        {
+            return ACTIVE.getName();
+        }
+        else
+            if (NORMAL.getCode() <= avgContact)
+            {
+                return NORMAL.getName();
+            }
+        return INACTIVE.getName();
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
+    }
+
+    public Double getCode()
+    {
+        return code;
+    }
+
+    public void setCode(Double code)
+    {
+        this.code = code;
+    }
+}

@@ -1,0 +1,452 @@
+package com.credit.web.util;
+
+import java.io.*;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.credit.common.exception.ServiceException;
+import com.credit.common.util.NumberFormat;
+import com.credit.common.util.Validator;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.Applicant;
+import com.credit.entity.CallDetails;
+import com.credit.entity.UserCallDetailsHistory;
+import com.credit.enumeration.CallModelEnum;
+import com.credit.service.cache.PhoneSegmentInfoCache;
+import com.google.common.collect.Maps;
+
+/**
+ * Created by wangjunling on 2017/3/9.
+ */
+public class CallDetailUtil
+{
+    private static Logger logger = LoggerFactory.getLogger(CallDetailUtil.class);
+
+    private static final Pattern CALL_TIME_PATTERN = Pattern
+            .compile("\\d{4}-\\d{1,2}-\\d{1,2}\\s+\\d{1,2}:\\d{1,2}:\\d{1,2}");
+
+    private static final Pattern CALL_TIME_2_PATTERN = Pattern
+            .compile("\\d{4}/\\d{1,2}/\\d{1,2}\\s+\\d{1,2}:\\d{1,2}:\\d{1,2}");
+
+    private static final String CALL_DETAIL_SPLIT_REGEX = ",|\t";
+
+    public static Map<String,Object> readCallDetailFile(Applicant applicant, String fileCharset, HttpServletRequest request, String oldFilePath, String fileMd5Digest, List<UserCallDetailsHistory> userCallDetailsHistories,String uploadFilePath)
+            throws ServiceException
+    {
+        Map<String,Object> objectMap = new HashMap<>();
+        List<String> errMsgList = new ArrayList<String>();
+        Map<String, Object> map = readFile(request, oldFilePath, fileMd5Digest,userCallDetailsHistories,uploadFilePath);
+        InputStream inputStream = (InputStream) map.get("inputStream");
+        try
+            {
+                List<String> stringList = IOUtils.readLines(inputStream, fileCharset);
+                for (String line : stringList)
+                {
+                    try
+                    {
+                        String[] strings = line.split(CALL_DETAIL_SPLIT_REGEX, -1);
+                        if (strings.length < 7)
+                        {
+
+                            throw new ServiceException("数据项格式不正确");
+
+                        }
+                        CallDetails callDetail = new CallDetails();
+                        callDetail.setCallTime(formatCallTime(strings[0]));
+                        callDetail.setDuration(formatDuration(strings[1]));
+                        callDetail.setCallModel(strings[2]);
+                        callDetail.setFormatCallModel(formatCallModel(callDetail.getCallModel()));
+                        callDetail.setContact(formatContactNumber(strings[3]));
+                        callDetail
+                                .setContactType(NumberFormat.isPhoneNumber(callDetail.getContact()) ? CallDetails.CONTACT_TYPE_PHONE
+                                        : CallDetails.CONTACT_TYPE_TEL);
+                        callDetail.setCallAddr(StringUtils.trimToNull(strings[4]));
+                        callDetail.setContactAddr(formatContactAddr(callDetail.getContact(),StringUtils.trimToNull(strings[5])));
+                        callDetail.setCalledType(StringUtils.trimToNull(strings[6]));
+                        callDetail.setCreateTime(new Date());
+                        applicant.getCallDetailsList().add(callDetail);
+                    }
+                    catch (Exception e)
+                    {
+                        errMsgList.add("解析申请人(" + applicant.getPhone() + ")详单行内容[" + line + "]失败:" + e.getMessage());
+                        logger.warn("解析详单行内容[" + line + "]失败", e);
+                    }
+
+                }
+            }
+            catch (Exception e)
+            {
+                errMsgList.add("读取详单文件[" + oldFilePath + "]失败:" + e.getMessage());
+                logger.error("读取文件失败", e);
+                throw new ServiceException("读取详单文件异常");
+            }
+
+        objectMap.put("errMsgList", errMsgList);
+        objectMap.put("params", map.get("userCallHistoryParams"));
+        return objectMap;
+    }
+
+    public static Map<String,Object> readFile(HttpServletRequest request, String oldFilePath, String fileMd5Digest,List<UserCallDetailsHistory> userCallDetailsHistories,String uploadFilePath)
+            throws ServiceException
+    {
+        Map<String,Object> map = Maps.newHashMap();
+        Map<String,String> params = Maps.newHashMap();
+        String filePath = "";
+        CommonsMultipartResolver commonsMultipartResolver = new CommonsMultipartResolver(request.getSession()
+                .getServletContext());
+        commonsMultipartResolver.setDefaultEncoding("utf-8");
+        InputStream inputStream = null;
+            if (!commonsMultipartResolver.isMultipart(request))
+            {
+                if (StringUtils.isNoneEmpty(oldFilePath))
+                {
+                    try
+                    {
+                        inputStream = new FileInputStream(oldFilePath);
+                        params.put("filePath",oldFilePath);
+                        params.put("fileMd5Digest",fileMd5Digest);
+                        map.put("inputStream",inputStream);
+                        map.put("userCallHistoryParams",params);
+                        return map;
+                    } catch (FileNotFoundException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+                params.put("filePath", oldFilePath);
+                params.put("fileMd5Digest",fileMd5Digest);
+                map.put("userCallHistoryParams",params);
+                map.put("inputStream", inputStream);
+                return map;
+            }
+            MultipartHttpServletRequest multipartHttpServletRequest = (MultipartHttpServletRequest) request;
+            Iterator<String> fileNames = multipartHttpServletRequest.getFileNames();
+            List<MultipartFile> multipartFiles = new ArrayList<>();
+            while (fileNames.hasNext())
+            {
+                String filename = fileNames.next();
+                try
+                {
+                    MultipartFile file = multipartHttpServletRequest.getFile(filename);
+                    multipartFiles.add(file);
+                }
+                catch (Exception e)
+                {
+                    logger.error("读取文件失败", e);
+                    throw new ServiceException("读取详单文件异常");
+                }
+            }
+            try
+            {
+                MultipartFile multipartFile = multipartFiles.get(0);
+                String saveFileName = multipartFile.getOriginalFilename();
+                String newFileMd5Digest = DigestUtils.md5Hex(multipartFile.getInputStream());
+
+                if (CollectionUtils.isNotEmpty(userCallDetailsHistories))
+                {
+                    for (UserCallDetailsHistory userCallDetailsHistory:userCallDetailsHistories)
+                    {
+                        if (userCallDetailsHistory.getFileMd5Digest().equals(newFileMd5Digest))
+                        {
+                            oldFilePath=userCallDetailsHistory.getCallDetailsPath();
+                            fileMd5Digest=userCallDetailsHistory.getFileMd5Digest();
+                        }
+                    }
+                }
+
+                if (newFileMd5Digest.equals(fileMd5Digest))
+                {
+                    inputStream = multipartFile.getInputStream();
+                    map.put("inputStream", inputStream);
+                    params.put("filePath",oldFilePath);
+                    params.put("fileMd5Digest",fileMd5Digest);
+                    map.put("userCallHistoryParams",params);
+                    return map;
+                }
+                String[] arr =saveFileName.split("\\.");
+                String originFileName = arr[0];
+                String suffix = arr[1];
+                String prefix = TimeUtil.format(new Date(), "yyyyMMdd");
+//                String fileDir ="f:/"+prefix +"/";   window本地测试
+//                String fileDir = ConfigInfo.CALL_DETAIL_UPLOAD_FILE_PATH+prefix +"/";
+                String fileDir = uploadFilePath+prefix +"/";
+                File dir = new File(fileDir);
+                filePath = fileDir + originFileName + "."+suffix;
+                final File file = new File(filePath);
+                if (!dir.exists())
+                {
+                    try
+                    {
+                        dir.mkdirs();
+                    } catch (Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+
+                }
+                if (!file.exists())
+                {
+                    try
+                    {
+                        file.createNewFile();
+                    } catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+                multipartFile.transferTo(file);
+                inputStream = multipartFile.getInputStream();
+                map.put("inputStream", inputStream);
+                params.put("filePath",filePath);
+                params.put("fileMd5Digest",newFileMd5Digest);
+                map.put("userCallHistoryParams",params);
+                return map;
+            } catch (IOException e)
+            {
+                e.printStackTrace();
+                throw new ServiceException("读取详单文件异常");
+            }
+    }
+
+    public static List<String> readCallDetailJsonArray(Applicant applicant, String callDetailJsonArray)
+            throws ServiceException
+    {
+        if (applicant == null || StringUtils.isEmpty(applicant.getPhone()))
+        {
+            throw new ServiceException("申请人信息为空");
+        }
+        if (StringUtils.isEmpty(callDetailJsonArray))
+        {
+            throw new ServiceException("详单JSON数组字符串为空");
+        }
+        List<String> errMsgList = new ArrayList<String>();
+		List<JSONObject> jsonObjectList;
+        try
+        {
+            jsonObjectList = JSONArray.parseArray(callDetailJsonArray, JSONObject.class);
+        }
+        catch (Exception e)
+        {
+            logger.warn("转换JSON数组字符串为JSON数组对象失败:", e);
+            throw new ServiceException("详单参数值格式有误【必须为JSON数组字符串】");
+        }
+        for (JSONObject jsonObject : jsonObjectList)
+        {
+            try
+            {
+                CallDetails callDetail = new CallDetails();
+                callDetail.setCallTime(formatCallTime(jsonObject.getString("call_time")));
+                callDetail.setDuration(formatDuration(jsonObject.getString("duration")));
+                callDetail.setCallModel(jsonObject.getString("call_model"));
+                callDetail.setFormatCallModel(formatCallModel(callDetail.getCallModel()));
+                callDetail.setContact(formatContactNumber(jsonObject.getString("contact")));
+                callDetail.setContactType(NumberFormat.isPhoneNumber(callDetail.getContact()) ? CallDetails.CONTACT_TYPE_PHONE
+                                : CallDetails.CONTACT_TYPE_TEL);
+                callDetail.setCallAddr(formatContactAddr(callDetail.getContact(),jsonObject.getString("call_addr")));
+                callDetail.setContactAddr(jsonObject.getString("contact_addr"));
+                callDetail.setCalledType(jsonObject.getString("called_type"));
+                callDetail.setCreateTime(new Date());
+                applicant.getCallDetailsList().add(callDetail);
+            }
+            catch (Exception e)
+            {
+                logger.error("解析详单记录[" + jsonObject + "]失败", e);
+                errMsgList.add("解析详单记录[" + jsonObject + "]失败:" + e.getMessage());
+            }
+        }
+        return errMsgList;
+    }
+	private static String formatContactAddr(String contactNumber,String contactAddr) throws Exception
+	{
+        if (StringUtils.isNotBlank(contactAddr))
+        {
+            return contactAddr;
+
+        }
+        if (StringUtils.isBlank(contactNumber) || !Validator.isTelphone(contactNumber))
+        {
+            return "";
+        }
+		String phoneOwnership = PhoneSegmentInfoCache.getInstance().getPhoneOwnership(contactNumber);
+        if (phoneOwnership==null)
+        {
+        	return "";
+		}
+		return phoneOwnership;
+	}
+    private static String formatContactNumber(String contactNumber) throws Exception
+    {
+        if (StringUtils.isEmpty(contactNumber))
+        {
+            throw new ServiceException("联系人号码不能为空");
+        }
+        String tagContactNumber = NumberFormat.formatNumber(contactNumber.trim());
+        if (StringUtils.isEmpty(tagContactNumber))
+        {
+            throw new ServiceException("联系人号码[" + contactNumber.trim() + "]不正确");
+        }
+        return tagContactNumber;
+    }
+
+    /**
+     * 格式化通话时长，以秒为单位返回通话时长，当通话时长为空或处理失败时，返回的通话时长为0
+     */
+    private static final int formatDuration(final String durationStr)
+    {
+        if (StringUtils.isEmpty(durationStr))
+        {
+            return 0;
+        }
+        try
+        {
+            return Integer.valueOf(durationStr);
+        }
+        catch (Exception e)
+        {
+            logger.warn("时长[" + durationStr + "]转换为秒失败:", e);
+        }
+        return 0;
+    }
+
+    /**
+     * 格式化呼叫模式
+     */
+    private static final String formatCallModel(final String callModel) throws Exception
+    {
+        if (StringUtils.isEmpty(callModel))
+        {
+            return null;
+        }
+        if (callModel.contains("未接") || callModel.contains("被") || callModel.contains("入"))
+        {
+            return CallModelEnum.CALL_IN.getComment();
+        }
+        else
+        {
+            return CallModelEnum.CALL_OUT.getComment();
+        }
+    }
+
+    /**
+     * 格式化通话开始时间，目前支持yyyy-MM-dd HH:mm:ss和yyyy/MM/dd
+     * HH:mm:ss，返回格式化后的结果:yyyy-MM-dd HH:mm:ss,若通话时间处理异常或为空，则返回null
+     */
+    private static final String formatCallTime(final String callTimeStr)
+    {
+        if (StringUtils.isEmpty(callTimeStr))
+        {
+            return "";
+        }
+        try
+        {
+            Matcher matcher = CALL_TIME_PATTERN.matcher(callTimeStr.trim());
+            if (!matcher.matches())
+            {
+                matcher = CALL_TIME_2_PATTERN.matcher(callTimeStr.trim());
+                if (matcher.matches())
+                {
+                    return TimeUtil.format(TimeUtil.parse(callTimeStr, "yyyy/MM/dd HH:mm:ss"), TimeUtil.FORMAT_NORMAL);
+                }
+                logger.debug("通话开始时间[" + callTimeStr + "]不正确");
+                return "";
+            }
+            return callTimeStr.replaceAll("\\s{2,}", " ").trim();
+        }
+        catch (Exception e)
+        {
+            logger.error("校验通话开始时间[" + callTimeStr + "]失败:", e);
+        }
+        return "";
+    }
+
+	public static List<String> readCallDetailFile(Applicant applicant, String fileCharset, HttpServletRequest request)
+			throws ServiceException
+	{
+		List<String> errMsgList = new ArrayList<String>();
+		CommonsMultipartResolver commonsMultipartResolver = new CommonsMultipartResolver(request.getSession()
+																								.getServletContext());
+		commonsMultipartResolver.setDefaultEncoding("utf-8");
+		if (!commonsMultipartResolver.isMultipart(request))
+		{
+			return errMsgList;
+		}
+
+		MultipartHttpServletRequest multiRequest = (MultipartHttpServletRequest) request;
+		Iterator<String> fileNames = multiRequest.getFileNames();
+		while (fileNames.hasNext())
+		{
+			String filename = fileNames.next();
+			try
+			{
+				MultipartFile file = multiRequest.getFile(filename);
+				List<String> stringList = IOUtils.readLines(file.getInputStream(), fileCharset);
+				for (String line : stringList)
+				{
+					try
+					{
+						String[] strings = line.split(CALL_DETAIL_SPLIT_REGEX, -1);
+						if (strings.length < 7)
+						{
+
+							throw new ServiceException("数据项格式不正确");
+
+						}
+						CallDetails callDetail = new CallDetails();
+						callDetail.setCallTime(formatCallTime(strings[0]));
+						callDetail.setDuration(formatDuration(strings[1]));
+						callDetail.setCallModel(strings[2]);
+						callDetail.setFormatCallModel(formatCallModel(callDetail.getCallModel()));
+						callDetail.setContact(formatContactNumber(strings[3]));
+						callDetail
+								.setContactType(NumberFormat.isPhoneNumber(callDetail.getContact()) ? CallDetails.CONTACT_TYPE_PHONE
+										: CallDetails.CONTACT_TYPE_TEL);
+						callDetail.setCallAddr(StringUtils.trimToNull(strings[4]));
+						callDetail.setContactAddr(formatContactAddr(callDetail.getContact(),StringUtils.trimToNull(strings[5])));
+						callDetail.setCalledType(StringUtils.trimToNull(strings[6]));
+						callDetail.setCreateTime(new Date());
+						applicant.getCallDetailsList().add(callDetail);
+					}
+					catch (Exception e)
+					{
+						errMsgList.add("解析申请人(" + applicant.getPhone() + ")详单行内容[" + line + "]失败:" + e.getMessage());
+						logger.warn("解析详单行内容[" + line + "]失败", e);
+					}
+
+				}
+			}
+			catch (Exception e)
+			{
+				errMsgList.add("读取详单文件[" + filename + "]失败:" + e.getMessage());
+				logger.error("读取文件失败", e);
+				throw new ServiceException("读取详单文件异常");
+			}
+		}
+
+		return errMsgList;
+	}
+
+    public static void main(String[] args)
+    {
+        String[] split = "2016-06-19 13:10:42\t70\t主叫\t13241225181\t北京\t\t".split("\t|,", -1);
+        String[] split2 = "2016-05-06 18:31:34,24,被叫,15091821074,陕西-渭南,渭南市,本地通话".split("\t|,", -1);
+        System.out.println(split.length);
+        System.out.println(split[6]);
+        System.out.println(Arrays.toString(split));
+        System.out.println(Arrays.toString(split2));
+    }
+}

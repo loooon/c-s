@@ -1,0 +1,207 @@
+<!-- /hd -->
+<div class="def-banner">
+    <ul class="banImgs">
+        <li style="z-index:10; display:list-item;"><a target="_blank"><img src="images/banner01.jpg" height="440" width="1000"></a></li>
+        <li style="z-index:1; display:none;"><a target="_blank"><img src="images/banner02.jpg" height="440" width="1000"></a></li>
+        <li style="z-index:1; display:none;"><a target="_blank"><img src="images/banner03.jpg"  height="440" width="1000"></a></li>
+        <li style="z-index:1; display:none;"><a target="_blank"><img src="images/banner04.jpg" height="440" width="1000"></a></li>
+    </ul>
+    <div class="clearfix"> </div>
+
+    <div class="jsNav" id="jsNav">
+        <a style="left:418px;" href="javascript:void(0)" onFocus="this.blur();" class="trigger"></a>
+        <a style="left:461px; top:-8px;" href="javascript:void(0)" onFocus="this.blur();" class="trigger current"></a>
+        <a style="left:504px; top:9px;" href="javascript:void(0)" onFocus="this.blur();" class="trigger"></a>
+        <a style="left:547px;" href="javascript:void(0)" onFocus="this.blur();" class="trigger"></a>
+    </div>
+    <div class="shadow"> </div>
+</div>
+<!-- end/slide -->
+<div class="tab_cont newtabs">
+    <div class="tabs">
+        <ul class="left-nav">
+            <li><a href="javascript:void(0)" class="curr"> <span class="tabfeau"> </span> 语言培训 </a></li>
+            <li><a href="javascript:void(0)"><span class="tabconpons"> </span> IT 培训 </a></li>
+            <li><a href="javascript:void(0)"><span class="tabgcar"> </span> 资格认证 </a></li>
+            <li><a href="javascript:void(0)"><span class="tabhelp"> </span> 学历文凭 </a></li>
+        </ul>
+    </div>
+    <div class="tabcontainer bdWrp">
+        <div class="tab-con cur-con">
+            <div class="category clearfix">
+                <div class="catebox">
+                    <div class="catetit FL"> 英语 </div>
+                    <div class="catelist clearfix fr">
+                        <a class="categ"> 四/六级 </a> </li>
+                        <a class="categ"> 雅思 </a> </li>
+                        <a class="categ"> 托福 </a> </li>
+                        <a class="categ"> 托业 </a> </li>
+                        <a class="categ"> GRE </a> </li>
+                        <a class="categ"> GMAT </a> </li>
+                        <a class="categ"> SAT </a> </li>
+                        <a class="categ"> SSAT </a> </li>
+                        <a class="categ"> AP </a> </li>
+                        <a class="categ"> ACT </a> </li>
+                    </div>
+                </div>
+                <div class="catebox last">
+                    <div class="catetit FL"> 小语种 </div>
+                    <div class="catelist clearfix fr">
+                        <a class="categ"> 法语 </a>
+                        <a class="categ"> 日语 </a>
+                        <a class="categ"> 韩语 </a>
+                        <a class="categ"> 德语 </a>
+                        <a class="categ"> 意大利语 </a>
+                        <a class="categ"> 西班牙语 </a>
+                        <a class="categ"> 葡萄牙语 </a>
+                        <a class="categ"> 阿拉伯语 </a>
+                        <a class="categ"> 俄语 </a>
+                        <a class="categ"> 印尼语 </a>
+                        <a class="categ"> 泰语 </a>
+                        <a class="categ"> 越南语 </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-con">
+            <div class="category clearfix">
+                <div class="catebox">
+                    <div class="catetit FL"> 英语 </div>
+                    <div class="catelist clearfix fr">
+                        <a class="categ"> 四/六级 </a> </li>
+                        <a class="categ"> 雅思 </a> </li>
+                        <a class="categ"> 托福 </a> </li>
+                        <a class="categ"> 托业 </a> </li>
+                        <a class="categ"> GRE </a> </li>
+                    </div>
+                </div>
+                <div class="catebox last">
+                    <div class="catetit FL"> 小语种 </div>
+                    <div class="catelist clearfix fr">
+                        <a class="categ"> 法语 </a>
+                        <a class="categ"> 日语 </a>
+                        <a class="categ"> 韩语 </a>
+                        <a class="categ"> 德语 </a>
+                        <a class="categ"> 意大利语 </a>
+                        <a class="categ"> 西班牙语 </a>
+                        <a class="categ"> 葡萄牙语 </a>
+                        <a class="categ"> 阿拉伯语 </a>
+                        <a class="categ"> 俄语 </a>
+                        <a class="categ"> 印尼语 </a>
+                        <a class="categ"> 泰语 </a>
+                        <a class="categ"> 越南语 </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-con">
+            <div class="category clearfix">
+                <div class="catebox">
+                    <div class="catetit FL"> 英语 </div>
+                    <div class="catelist clearfix fr">
+                        <a class="categ"> 四/六级 </a> </li>
+                        <a class="categ"> 雅思 </a> </li>
+                        <a class="categ"> 托福 </a> </li>
+                        <a class="categ"> 托业 </a> </li>
+                        <a class="categ"> GRE </a> </li>
+                        <a class="categ"> GMAT </a> </li>
+                        <a class="categ"> SAT </a> </li>
+                        <a class="categ"> SSAT </a> </li>
+                        <a class="categ"> AP </a> </li>
+                        <a class="categ"> ACT </a> </li>
+                    </div>
+                </div>
+                <div class="catebox last">
+                    <div class="catetit FL"> 小语种 </div>
+                    <div class="catelist clearfix fr">
+                        <a class="categ"> 法语 </a>
+                        <a class="categ"> 日语 </a>
+                        <a class="categ"> 韩语 </a>
+                        <a class="categ"> 德语 </a>
+                        <a class="categ"> 意大利语 </a>
+                        <a class="categ"> 西班牙语 </a>
+                        <a class="categ"> 葡萄牙语 </a>
+                        <a class="categ"> 阿拉伯语 </a>
+                        <a class="categ"> 俄语 </a>
+                        <a class="categ"> 印尼语 </a>
+                        <a class="categ"> 泰语 </a>
+                        <a class="categ"> 越南语 </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-con">
+            <div class="category clearfix">
+                <div class="catebox">
+                    <div class="catetit FL"> 英语 </div>
+                    <div class="catelist clearfix fr">
+                        <a class="categ"> 四/六级 </a> </li>
+                        <a class="categ"> 雅思 </a> </li>
+                        <a class="categ"> 托福 </a> </li>
+                        <a class="categ"> 托业 </a> </li>
+                        <a class="categ"> GRE </a> </li>
+                        <a class="categ"> GMAT </a> </li>
+                        <a class="categ"> SAT </a> </li>
+                        <a class="categ"> SSAT </a> </li>
+                        <a class="categ"> AP </a> </li>
+                        <a class="categ"> ACT </a> </li>
+                    </div>
+                </div>
+                <div class="catebox last">
+                    <div class="catetit FL"> 小语种 </div>
+                    <div class="catelist clearfix fr">
+                        <a class="categ"> 法语 </a>
+                        <a class="categ"> 日语 </a>
+                        <a class="categ"> 韩语 </a>
+                        <a class="categ"> 德语 </a>
+                        <a class="categ"> 意大利语 </a>
+                        <a class="categ"> 西班牙语 </a>
+                        <a class="categ"> 葡萄牙语 </a>
+                        <a class="categ"> 阿拉伯语 </a>
+                        <a class="categ"> 俄语 </a>
+                        <a class="categ"> 印尼语 </a>
+                        <a class="categ"> 泰语 </a>
+                        <a class="categ"> 越南语 </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end/tabcontainer -->
+</div>
+<!-- end/tab_cont -->
+
+<div class="bdWrp">
+    <div class="fubox clearfix">
+        <div class="fuwrp">
+            <img src="images/s1.png" class="fupics"/>
+        </div>
+        <div class="fuwrp">
+            <img src="images/s2.png" class="fupics"/>
+        </div>
+        <div class="fuwrp">
+            <img src="images/s3.png" class="fupics"/>
+        </div>
+        <div class="fuwrp">
+            <img src="images/s4.png" class="fupics"/>
+        </div>
+        <div class="fuwrp">
+            <img src="images/s5.png" class="fupics"/>
+        </div>
+        <div class="fuwrp">
+            <img src="images/s6.png" class="fupics"/>
+        </div>
+        <div class="fuwrp">
+            <img src="images/s7.png" class="fupics"/>
+        </div>
+        <div class="fuwrp">
+            <img src="images/s8.png" class="fupics"/>
+        </div>
+        <div class="fuwrp">
+            <img src="images/s9.png" class="fupics"/>
+        </div>
+        <div class="fuwrp">
+            <img src="images/s10.png" class="fupics"/>
+        </div>
+    </div>
+</div>

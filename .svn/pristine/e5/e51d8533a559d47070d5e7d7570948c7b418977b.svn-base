@@ -1,0 +1,138 @@
+package com.credit.web.controller;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+
+import com.credit.common.util.NumberFormat;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.Applicant;
+import com.credit.entity.PhoneSegmentInfo;
+import com.credit.service.PhoneSegmentInfoService;
+import com.credit.web.model.ContactCheckModel;
+import com.credit.web.model.GrayscaleModel;
+import com.credit.web.util.CallDetailUtil;
+import com.credit.web.util.GrayscaleUtil;
+
+/**
+ * Created by wangjunling on 2017/3/8.
+ */
+
+@Controller
+@RequestMapping("/grayscale")
+public class GrayscaleController extends AbstractBaseController
+{
+
+    private Logger logger = LoggerFactory.getLogger(GrayscaleController.class);
+
+    @Resource
+    private PhoneSegmentInfoService phoneSegmentInfoService;
+
+    @RequestMapping(value = "/report", method = RequestMethod.POST)
+    public String service(String phone, String name, String idcard, String applyDateStr,
+            @RequestParam(defaultValue = "utf-8") String fileCharset, ContactCheckModel contactCheckModel,
+            HttpServletRequest request, Model model, RedirectAttributes attributes)
+    {
+        String REDIRECT_VIEW = "redirect:/search/personal";
+        if (StringUtils.isBlank(phone))
+        {
+            attributes.addFlashAttribute("errorMsg", "手机号码为空");
+            return REDIRECT_VIEW;
+        }
+        Applicant applicant = new Applicant();
+        try
+        {
+            String tagPhoneNumber = NumberFormat.formatNumber(phone);
+            if (!NumberFormat.isPhoneNumber(tagPhoneNumber))
+            {
+                logger.debug("输入申请人电话号码:" + phone + ",转换后的号码" + tagPhoneNumber);
+                attributes.addFlashAttribute("errorMsg", "申请人电话号码[" + phone + "]不正确");
+                return REDIRECT_VIEW;
+            }
+            applicant.setPhone(tagPhoneNumber);
+        }
+        catch (Exception e)
+        {
+            logger.warn("申请人电话号码[" + applicant.getPhone() + "]不正确:", e);
+            attributes.addFlashAttribute("errorMsg", "申请人电话号码[" + applicant.getPhone() + "]不正确");
+            return REDIRECT_VIEW;
+        }
+        if (StringUtils.isNotBlank(applyDateStr))
+        {
+            try
+            {
+                attributes.addFlashAttribute("errorMsg", "错误信息");
+                Date applyDate = TimeUtil.parse(applyDateStr, "yyyy-MM-dd");
+                if (applyDate == null)
+                {
+                    attributes.addFlashAttribute("errorMsg", "申请时间[" + applyDateStr + "]格式不正确");
+                    return REDIRECT_VIEW;
+                }
+                applicant.setApplyDate(applyDate);
+            }
+            catch (Exception e)
+            {
+                logger.warn("申请时间[" + applyDateStr + "]格式不正确");
+                attributes.addFlashAttribute("errorMsg", "申请时间[" + applyDateStr + "]格式不正确");
+                return REDIRECT_VIEW;
+            }
+        }
+
+        applicant.setIdcard(idcard);
+        applicant.setAname(name);
+        List<String> errMsgList;
+        try
+        {
+            errMsgList = CallDetailUtil.readCallDetailFile(applicant, fileCharset, request);
+        }
+        catch (Exception e)
+        {
+            logger.error("读取详单文件异常", e);
+            attributes.addFlashAttribute("errorMsg", e.getMessage());
+            return REDIRECT_VIEW;
+        }
+
+        if (CollectionUtils.isEmpty(applicant.getCallDetailsList()))
+        {
+            if (CollectionUtils.isEmpty(errMsgList))
+            {
+                attributes.addFlashAttribute("errorMsg", "申请人详单内容为空");
+                return REDIRECT_VIEW;
+            }
+            attributes.addFlashAttribute("errMsgList", errMsgList);
+            return REDIRECT_VIEW;
+        }
+
+        GrayscaleModel grayscaleModel = new GrayscaleModel();
+        grayscaleModel.setContactCheck(contactCheckModel.getContactChecks());
+        PhoneSegmentInfo phoneSegmentInfo = phoneSegmentInfoService.searchByPhone(applicant.getPhone());
+        try
+        {
+            GrayscaleUtil.buildGrayscaleModel(grayscaleModel, applicant, phoneSegmentInfo);
+        }
+        catch (Exception e)
+        {
+            logger.error("详单统计错误", e);
+            attributes.addFlashAttribute("errorMsg", e.getMessage());
+            return REDIRECT_VIEW;
+        }
+        model.addAttribute("grayscaleModel", grayscaleModel);
+
+        return "user/search/report";
+
+    }
+}

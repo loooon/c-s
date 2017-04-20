@@ -1,0 +1,13 @@
+package com.credit.repository;
+
+import com.credit.base.JpaBaseRepository;
+import com.credit.entity.DunNumberCount;
+
+/**
+ * Created by wangjunling on 2017/3/21.
+ */
+
+public interface DunNumberCountRepository extends JpaBaseRepository<DunNumberCount, Integer>
+{
+
+}

@@ -1,0 +1,54 @@
+
+$().ready(function () {
+    $("#submitApply").click(function () {
+        $("#message").hide();
+        $("#phoneMessage,#companyNameMessage,#contactsMessage").hide();
+        $("#applyForm").find('input').each(function(){
+            $(this).val($.trim($(this).val()));
+        });
+        var companyName = $("#companyName").val();
+        if(companyName == ''){
+            $("#companyNameMessage").show();
+            return;
+        }
+        var contacts = $("#contacts").val();
+        if(contacts == ''){
+            $("#contactsMessage").show();
+            return;
+        }
+        var phone = $("#phone").val();
+        if(phone == ''||!phone.isMobile())
+        {
+            $("#phoneMessage").show();
+            return;
+        }
+        var values = $("#applyForm").serializeArray();
+        $.ajax({
+            dataType: 'json',
+            data: values,
+            type: 'post',
+            url: '/dun/company',
+            success: function(data, r, xhr) {
+                if (data.result == 0) {
+                    $("#message").text("申请成功");
+                    $("#message").show();
+                    $("#companyName").val("");
+                    $("#contacts").val("");
+                    $("#phone").val("");
+                } else {
+                    $('#message').text(data.message);
+                }
+            }
+        });
+    });
+});
+
+String.prototype.isPhone = function () {
+    var t = /((^(\+86)|(86))?(((\d{7,8})|(\d{4}|\d{3})-(\d{7,8})|(\d{4}|\d{3})-(\d{7,8})-(\d{4}|\d{3}|\d{2}|\d{1})|(\d{7,8})-(\d{4}|\d{3}|\d{2}|\d{1}))$))/;
+    return t.test(this)
+}, String.prototype.isMobile = function () {
+    // var t = /^(\+86)|(86)?(\d{11})$/;
+    // var t = /^(\+86)|(86)?(^((1[3,5,8][0-9])|(14[5,7]))\d{8}$)/;
+    var t = /(^0{0,1}1[3|4|5|6|7|8|9][0-9]{9}$)/;
+    return t.test(this)
+}

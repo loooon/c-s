@@ -1,0 +1,116 @@
+package com.credit.entity;
+
+import java.util.Date;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "tb_user_call_details_history")
+public class UserCallDetailsHistory
+{
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id")
+    private Integer id;
+
+    @Column(name = "user_id")
+    private Integer userId;
+
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "idcard")
+    private String idcard;
+
+    @Column(name = "apply_date")
+    private String applyDate;
+
+    @Column(name = "call_details_path")
+    private String callDetailsPath;
+
+    @Column(name = "create_date")
+    private Date createDate;
+
+    public Integer getId()
+    {
+        return id;
+    }
+
+    public void setId(Integer id)
+    {
+        this.id = id;
+    }
+
+    public String getPhone()
+    {
+        return phone;
+    }
+
+    public void setPhone(String phone)
+    {
+        this.phone = phone;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
+    }
+
+    public String getIdcard()
+    {
+        return idcard;
+    }
+
+    public void setIdcard(String idcard)
+    {
+        this.idcard = idcard;
+    }
+
+    public Integer getUserId()
+    {
+        return userId;
+    }
+
+    public void setUserId(Integer userId)
+    {
+        this.userId = userId;
+    }
+
+    public String getApplyDate()
+    {
+        return applyDate;
+    }
+
+    public void setApplyDate(String applyDate)
+    {
+        this.applyDate = applyDate;
+    }
+
+    public String getCallDetailsPath()
+    {
+        return callDetailsPath;
+    }
+
+    public void setCallDetailsPath(String callDetailsPath)
+    {
+        this.callDetailsPath = callDetailsPath;
+    }
+
+    public Date getCreateDate()
+    {
+        return createDate;
+    }
+
+    public void setCreateDate(Date createDate)
+    {
+        this.createDate = createDate;
+    }
+}

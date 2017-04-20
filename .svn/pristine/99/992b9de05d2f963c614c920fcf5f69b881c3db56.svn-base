@@ -1,0 +1,1 @@
+1.config.properties配置文件中需要添加validate.vkey.switch=1项配置

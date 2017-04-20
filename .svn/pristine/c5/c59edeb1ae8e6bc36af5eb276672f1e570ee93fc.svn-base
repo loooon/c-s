@@ -1,0 +1,134 @@
+/**
+ * Created by admin on 3/22/2017.
+ */
+
+//保存
+function btnAdd() {
+    var formData = new FormData($("#query_batch_Form")[0]);
+
+    var filePath=$('#file_id').val();
+
+    if(filePath==""){
+        $("#error_message").text("请选择文件");
+        return;
+    }
+    var ext=filePath.substr(filePath.lastIndexOf(".")).toLowerCase();
+
+    if (ext!=".txt" && ext!=".csv") {
+        $("#error_message").text('只支持文件格式txt、csv');
+        $('#file_id').val("");
+        $("#fileTxt").text('选择上传文件');
+        return;
+    }
+    var file=$('#file_id')[0];
+    var byteSize  = file.files[0].size;
+
+
+    if (byteSize > 2097152) {
+        $("#error_message").text('请上传2M以内的文件');
+        $('#file_id').val("");
+        $("#fileTxt").text('选择上传文件');
+        return;
+    }
+        //$("#error_message").html('上传号码文件（支持文件格式txt、csv）');
+
+    $.ajax({
+        url: "/dun/batch",
+        method: "POST",
+        data: formData,
+        dataType:'json',
+        async:true,
+        contentType: false, //必须false才会避开jQuery对 formdata 的默认处理 XMLHttpRequest会对 formdata 进行正确的处理
+        processData: false, //必须false才会自动加上正确的Content-Type
+        success: function (data) {
+            if (data.result==200) {
+                $(".apply-p").css("display",'none');
+                var data = data.data;
+                var resultList = data.resultList;
+                var html = '<div class="layout"  >';
+                resultList.forEach(function (value, index, array)
+                {
+                    var src_style = "";
+                    var demand_type_name = "";
+                    var org_type_name = "";
+                    var div_class = "";
+                    if (array[index].demandType == null || array[index].demandType.demandType == null || array[index].demandType.demandType == "")
+                    {
+                        src_style = "/resources/img/dun/icon8.png";
+                        demand_type_name = "高风险";
+                    }
+                    else if (array[index].demandType.demandType == 15)
+                    {
+                        src_style = "/resources/img/dun/icon5.png";
+                        org_type_name = array[index].orgType.orgTypeName;
+                        demand_type_name = array[index].demandType.demandTypeName;
+                    }
+                    else if (array[index].demandType.demandType == 10)
+                    {
+                        src_style = "/resources/img/dun/icon6.png";
+                        org_type_name = array[index].orgType.orgTypeName;
+                        demand_type_name = array[index].demandType.demandTypeName;
+                    }
+                    else
+                    {
+                        src_style = "/resources/img/dun/icon7.png";
+                        org_type_name = array[index].orgType.orgTypeName;
+                        if (org_type_name == null || org_type_name == undefined)
+                        {
+                            org_type_name = "";
+                        }
+                        else
+                        {
+                            org_type_name += '·';
+                        }
+                        demand_type_name = "普通";
+                    }
+
+                     html += '<div class="result-block01"> <div class="res-left01"> <img src="'+src_style+'">' +
+                        ' </div> <div class="res-right01"> <h4>'+org_type_name+demand_type_name+'</h4> ' +
+                        '<h5>电话号码：'+array[index].phoneNumber+'</h5> </div> </div>';
+                });
+                html+='</div>';
+                if(data.isGreaterThan)
+                {
+                    html+='<div class="adv" id="resultAdv">'+
+                        '<a href="#"><img src="/resources/img/dun/adv01.jpg"></a>'+
+                    '</div>';
+                }
+                $("#batch_data_div").html(html);
+                $("#batch_data_div").show();
+                $(".file").css("min-height",0);
+                var maxSize = data.maxSize;
+                $("#resultSize").text("从文件中共找到"+maxSize+"个号码");
+                $("#resultSizeP").show();
+
+            }
+            else {
+                $(".error_message_p").css("display",'block');
+                $("#error_message").text("未找到到电话号码");
+                $("#batch_data_div").html('');
+                $("#batch_data_div").hide();
+                $(".file").css("min-height",300);
+                $("#resultSize").hide();
+            }
+        }
+    });
+}
+
+
+$(document).ready(function ()
+{
+    $("#upload_file").on('click',function ()
+    {
+        btnAdd();
+    });
+    $("#file_id").on('change',function ()
+    {
+        if ($(this).val() != "") {
+
+            $("#fileTxt").text($(this).val());
+        }else{
+            $("#fileTxt").text('选择上传文件');
+        }
+    });
+});

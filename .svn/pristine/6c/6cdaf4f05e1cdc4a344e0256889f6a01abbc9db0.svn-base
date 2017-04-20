@@ -1,0 +1,28 @@
+package com.credit.web.controller;
+
+import com.credit.common.result.ResultJson;
+import com.credit.entity.User;
+import com.credit.service.UserService;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.annotation.Resource;
+
+/**
+ * Created by wangjunling on 2017/3/7.
+ */
+
+@Controller
+public class UserController {
+	@Resource
+	private UserService userService;
+
+
+	@RequestMapping("/user1")
+	@ResponseBody
+	public ResultJson list(){
+		User search = userService.search(1);
+		return new ResultJson().success(search);
+	}
+}

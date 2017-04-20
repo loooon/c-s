@@ -1,0 +1,125 @@
+package com.credit.service.impl;
+
+import java.util.Date;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.httpclient.HttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Service;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.common.sms.SmsSender;
+import com.credit.common.sms.ums.UmsSender;
+import com.credit.common.sms.ums.UmsSmsEntry;
+import com.credit.common.util.RandomUtil;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.Sms;
+import com.credit.repository.SmsRepository;
+import com.credit.service.SmsService;
+
+/**
+ * Created by wangjunling on 2017/3/28.
+ */
+@Service("smsService")
+public class SmsServiceImpl implements SmsService
+{
+    Logger logger = LoggerFactory.getLogger(SmsServiceImpl.class);
+
+    @Value("${sms.send.url}")
+    private String sendUrl;
+
+    @Value("${sms.company.code}")
+    private String companyCode;
+
+    @Value("${sms.username}")
+    private String username;
+
+    @Value("${sms.password}")
+    private String password;
+
+    @Value("${sms.expire.second}")
+    private String expireSecond;
+
+    @Resource
+    private SmsRepository smsRepository;
+
+    @Override
+    public Sms saveSend(Sms sms) throws ServiceException
+    {
+        if (sms == null)
+        {
+            return null;
+        }
+        SmsSender smsSender = getSmsSender();
+        UmsSmsEntry smsEntry = new UmsSmsEntry();
+        smsEntry.setReceiver(sms.getReceiver());
+        smsEntry.setContent(sms.getSmsContent());
+        smsEntry.setSerialNumber(genSmsSerialNumber());
+        Map<String, String> sendResult = null;
+        try
+        {
+            sendResult = smsSender.send(smsEntry);
+        }
+        catch (Exception e)
+        {
+            logger.error("调用短信接口异常", e);
+            throw new ServiceException("调用短信接口异常");
+        }
+
+        if (sendResult != null)
+        {
+            String requestResult = sendResult.get(UmsSmsEntry.PRIMARY_RESULT);
+            sms.setLastupdatetime(new Date());
+            sms.setPrimaryResult(requestResult);
+            sms.setSmsSerialNo(smsEntry.getSerialNumber());
+
+            Integer result = Integer.parseInt(sendResult.get(UmsSmsEntry.RESULT));
+
+            if (result.equals(UmsSmsEntry.SMS_SEND_SUCCESS))
+            {
+                sms.setSmsState(Sms.SMS_STATE_SUCCESSED);
+                sms.setExpireDate(TimeUtil.addSecond(new Date(), Integer.valueOf(expireSecond)));
+                logger.info("短信发送成功！");
+                return smsRepository.save(sms);
+            }
+            else
+            {
+            	sms.setSmsState(Sms.SMS_STATE_FAILED);
+            	sms.setSmsFailReason(sendResult.get(UmsSmsEntry.RESULT_DESC));
+				return smsRepository.save(sms);
+            }
+        }
+        else
+        {
+            logger.info("返回结果为null");
+            throw new ServiceException("返回结果为null");
+        }
+    }
+
+    @Override
+    public Sms searchById(Integer smsId)
+    {
+        return smsRepository.findOne(smsId);
+    }
+
+    private SmsSender getSmsSender()
+    {
+        HttpClient httpClient = new HttpClient();
+        httpClient.getParams().setParameter(httpClient.getParams().USER_AGENT,
+                "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");
+
+        return new UmsSender(sendUrl, companyCode, username, password, httpClient);
+    }
+
+    private static String genSmsSerialNumber()
+    {
+        Date currentDate = new Date();
+        return TimeUtil.format(currentDate, TimeUtil.FORMAT_COMPACT) + RandomUtil.genRandomNumberString(6);
+    }
+
+}

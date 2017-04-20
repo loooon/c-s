@@ -1,0 +1,41 @@
+package com.credit.web.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.alibaba.fastjson.annotation.JSONField;
+
+/**
+ * Created by wangjunling on 2017/3/13.
+ */
+public class GrayscaleOrgStat
+{
+	@JSONField(name = "basic_info")
+    private BasicInfo basicInfo = new BasicInfo();
+
+    @JSONField(name = "attribute_tag")
+    private AttributeTag attributeTag = new AttributeTag();
+
+
+
+    public BasicInfo getBasicInfo()
+    {
+        return basicInfo;
+    }
+
+    public void setBasicInfo(BasicInfo basicInfo)
+    {
+        this.basicInfo = basicInfo;
+    }
+
+    public AttributeTag getAttributeTag()
+    {
+        return attributeTag;
+    }
+
+    public void setAttributeTag(AttributeTag attributeTag)
+    {
+        this.attributeTag = attributeTag;
+    }
+
+}

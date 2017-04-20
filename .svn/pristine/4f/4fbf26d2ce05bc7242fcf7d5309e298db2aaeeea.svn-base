@@ -1,0 +1,264 @@
+package com.credit.service.impl;
+
+import java.io.File;
+import java.util.*;
+
+import javax.annotation.Resource;
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+
+import org.apache.log4j.Logger;
+import org.apache.velocity.app.VelocityEngine;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.ui.velocity.VelocityEngineUtils;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.model.MailModel;
+import com.credit.service.EmailService;
+
+/**
+ * Created by Michael Chan on 3/9/2017.
+ */
+@Service("emailService")
+public class EmailServiceImpl implements EmailService
+{
+    private String excelPath = "f://";
+
+    @Resource
+    private JavaMailSender javaMailSender;      // 注入Spring封装的javamail，Spring的xml中已让框架装配
+
+    @Resource
+    private SimpleMailMessage simpleMailMessage;
+
+    @Resource
+    TaskExecutor taskExecutor;      // 注入Spring封装的异步执行器
+
+    private static VelocityEngine velocityEngine = null;
+
+    private static Map<String, Object> proMap = null;
+
+    static
+    {
+        proMap = new HashMap<>();
+        proMap.put("resource.loader", "class");
+        proMap.put("class.resource.loader.class",
+                "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+    }
+
+    public static VelocityEngine getVelocityEngineInstance()
+    {
+        if (null == velocityEngine)
+        {
+            synchronized (VelocityEngine.class)
+            {
+                if (null == velocityEngine)
+                {
+                    velocityEngine = new VelocityEngine();
+                    for (Map.Entry<String, Object> entry : proMap.entrySet())
+                    {
+                        velocityEngine.setProperty(entry.getKey(), entry.getValue());
+                    }
+                }
+            }
+        }
+        return velocityEngine;
+    }
+
+    /**
+     * @param password 密码
+     * @throws ServiceException
+     */
+    @Override
+    public void emailManage(String password) throws ServiceException
+    {
+        MailModel mail = new MailModel();
+        mail.setSubject("找回密码");        // 主题
+        Map<String, String> attachments = new HashMap<String, String>();         // 附件
+        //attachments.put("清单.xlsx", excelPath + "清单.xlsx");
+        // mail.setAttachments(attachments);
+        String date = TimeUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss");
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("reset_time", date);
+        model.put("random_password", password);
+        String text = VelocityEngineUtils.mergeTemplateIntoString(getVelocityEngineInstance(), "conf/findPassword.vm", "UTF-8", model);
+        StringBuilder builder = new StringBuilder();        // 内容
+        String passwordHtml = "您在 " + date + " 进行了找回密码的操作。新的登录密码为:" + password + ",请在登录后修改密码。";
+        builder.append("<html><body>")
+                .append("&nbsp&nbsp&nbsp&nbsp")
+                .append(passwordHtml)
+                .append("<br />")
+                .append("</body></html>");
+        String content = builder.toString();
+        mail.setContent(content);
+        sendMailByAsynchronousMode(mail, text);
+    }
+
+    /**
+     * 发送邮件
+     * @param mail
+     * @param text 邮件模板
+     * @throws ServiceException
+     * @throws MessagingException
+     */
+    @Override
+    public void sendEmail(MailModel mail, String text) throws ServiceException, MessagingException
+    {
+        // 建立邮件消息
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper messageHelper;
+        try
+        {
+            messageHelper = new MimeMessageHelper(message, true, "UTF-8");
+            // 设置发件人邮箱
+            if (mail.getEmailFrom() != null)
+            {
+                messageHelper.setFrom(mail.getEmailFrom());
+            }
+            else
+            {
+                messageHelper.setFrom(simpleMailMessage.getFrom());
+            }
+            // 设置收件人邮箱
+            if (mail.getToEmails() != null)
+            {
+                String[] toEmailArray = mail.getToEmails().split(";");
+                List<String> toEmailList = new ArrayList<String>();
+                if (null == toEmailArray || toEmailArray.length <= 0)
+                {
+                    throw new ServiceException("收件人邮箱不得为空！");
+                }
+                else
+                {
+                    for (String s : toEmailArray)
+                    {
+                        if (s != null && !s.equals(""))
+                        {
+                            toEmailList.add(s);
+                        }
+                    }
+                    if (null == toEmailList || toEmailList.size() <= 0)
+                    {
+                        throw new ServiceException("收件人邮箱不得为空！");
+                    }
+                    else
+                    {
+                        toEmailArray = new String[toEmailList.size()];
+                        for (int i = 0; i < toEmailList.size(); i++)
+                        {
+                            toEmailArray[i] = toEmailList.get(i);
+                        }
+                    }
+                }
+                messageHelper.setTo(toEmailArray);
+            }
+            else
+            {
+                messageHelper.setTo(simpleMailMessage.getTo());
+            }
+
+            // 邮件主题
+            if (mail.getSubject() != null)
+            {
+                messageHelper.setSubject(mail.getSubject());
+            }
+            else
+            {
+
+                messageHelper.setSubject(simpleMailMessage.getSubject());
+            }
+
+            // true 表示启动HTML格式的邮件
+            messageHelper.setText(text, true);
+
+            // 添加图片
+            if (null != mail.getPictures())
+            {
+                for (Iterator<Map.Entry<String, String>> it = mail.getPictures().entrySet().iterator(); it.hasNext();)
+                {
+                    Map.Entry<String, String> entry = it.next();
+                    String cid = entry.getKey();
+                    String filePath = entry.getValue();
+                    if (null == cid || null == filePath)
+                    {
+                        throw new RuntimeException("请确认每张图片的ID和图片地址是否齐全！");
+                    }
+
+                    File file = new File(filePath);
+                    if (!file.exists())
+                    {
+                        throw new RuntimeException("图片" + filePath + "不存在！");
+                    }
+
+                    FileSystemResource img = new FileSystemResource(file);
+                    messageHelper.addInline(cid, img);
+                }
+            }
+
+            // 添加附件
+            if (null != mail.getAttachments())
+            {
+                for (Iterator<Map.Entry<String, String>> it = mail.getAttachments().entrySet().iterator(); it
+                        .hasNext();)
+                {
+                    Map.Entry<String, String> entry = it.next();
+                    String cid = entry.getKey();
+                    String filePath = entry.getValue();
+                    if (null == cid || null == filePath)
+                    {
+                        throw new RuntimeException("请确认每个附件的ID和地址是否齐全！");
+                    }
+
+                    File file = new File(filePath);
+                    if (!file.exists())
+                    {
+                        throw new RuntimeException("附件" + filePath + "不存在！");
+                    }
+
+                    FileSystemResource fileResource = new FileSystemResource(file);
+                    messageHelper.addAttachment(cid, fileResource);
+                }
+            }
+            messageHelper.setSentDate(new Date());
+            // 发送邮件
+            javaMailSender.send(message);
+        }
+        catch (MessagingException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 异步发送
+     * 
+     * @see
+     */
+    @Async
+    public void sendMailByAsynchronousMode(final MailModel email, final String text) throws ServiceException
+    {
+        taskExecutor.execute(new Runnable()
+        {
+            public void run()
+            {
+                try
+                {
+                    sendEmail(email, text);
+                    System.out.println("------------------is sending mail------------\r\n");
+                }
+                catch (Exception e)
+                {
+                    System.out.println("------------------sending mail exception------------\r\n");
+                    System.out.println(e.getMessage());
+                }
+            }
+        });
+    }
+
+}

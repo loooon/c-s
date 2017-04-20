@@ -1,0 +1,13 @@
+package com.credit.service;
+
+import com.credit.entity.User;
+
+/**
+ * Created by wangjunling on 2017/3/7.
+ */
+public interface UserService
+{
+	User save(User user);
+
+	User search(Integer id);
+}

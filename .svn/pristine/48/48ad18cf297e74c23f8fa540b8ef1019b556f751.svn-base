@@ -1,0 +1,84 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <meta name="theme-color" content="#ffffff"> 
+	<title>填写信息-催收黄页</title>
+	<link href="/resources/css/dun/style.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="/resources/js/lib/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="/resources/js/lib/countUp.js"></script>
+    <script type="text/javascript" src="/resources/js/dun/dunCount.js"></script>
+    <script type="text/javascript" src="/resources/js/dun/side.js"></script>
+</head>
+<body>
+	<div class="layout navbar">
+		<a href="/dun/index" class="logo">
+			<img src="/resources/img/dun/logo.png" alt="">
+		</a>
+		<ul>
+			<li><a href="/dun/search">查验催收号码</a></li>
+			<li><a href="/dun/auth">看看他有没有被催收</a></li>
+			<li><a href="/dun/company">集团用户通道</a></li>
+			<li><a href="/dun/batch">催收号码申诉</a></li>
+		</ul>
+	</div>
+	<div class="nub">
+		<h4 id="dunCount">0</h4>
+		<h5>凭安已发现催收号码总数</h5>
+	</div>
+	<div class="index">
+		<div class="in-main">
+			<div class="write">
+				<div class="write-content">
+					<h2><img src="/resources/img/dun/icon9.png">请填写被催收人信息</h2>
+					<div class="from-input">
+						<div class="from-block">
+							<p><span><i>*</i>手机号：</span><input type="text" value="请输入查询人手机号"></p>
+							<p class="b1"><em><img src="/resources/img/dun/infor.png">请输入正确的手机号</em></p>
+						</div>
+						<div class="from-block">
+							<p>
+								<span><i>*</i>授权文件：</span>
+								<div class="from-file">									
+									<input type="file" value="选择上传文件">
+									<b>选择上传文件</b>
+								</div>
+								
+							</p>
+							<p class="b2"><em><img src="/resources/img/dun/infor.png">请输入正确的手机号</em></p>
+						</div>
+						<div class="from-block-btn">
+							<p><span></span><input type="button" value="查一查"></p>							
+						</div>
+					</div>
+					
+				</div>
+			</div>
+		</div>
+	</div>
+		
+	<div class="copy">
+		<p>Copyright © 2015 水滴信用网shuidixy.com 保留所有权利 沪ICP备12039960号-5</p>
+	</div>
+	<div class="side">        
+        <a href="javascript:void(0)">
+            <div class="side-pic">
+                <div class="pic"></div>
+                <div class="back" style="display: none"></div>
+            </div>
+        </a>
+        <a href="javascript:void(0)">
+            <div class="side-pic01">
+                <div class="pic01"></div>
+                <div class="back01" style="display: none"></div>
+            </div>
+        </a>
+   </div>    
+</body>
+</html>

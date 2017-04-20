@@ -1,0 +1,8 @@
+ALTER TABLE tb_admin MODIFY  create_time  timestamp not null DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE tb_admin MODIFY  update_time  timestamp not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE tb_site_resource MODIFY  create_time  timestamp not null DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE tb_site_resource MODIFY  update_time  timestamp not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE tb_user_permission MODIFY  create_date  timestamp not null DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE tb_user_permission MODIFY  update_time  timestamp not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;

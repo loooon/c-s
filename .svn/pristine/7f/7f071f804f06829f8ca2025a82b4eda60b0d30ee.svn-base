@@ -1,0 +1,18 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<link href="/resources/Hplus/css/bootstrap.min.css?v=3.4.0" rel="stylesheet">
+<link href="/resources/Hplus/font-awesome/css/font-awesome.css?v=4.3.0" rel="stylesheet">
+
+<link href="/resources/Hplus/css/animate.css" rel="stylesheet">
+<link href="/resources/Hplus/css/style.css?v=2.2.0" rel="stylesheet">
+
+
+<!-- Mainly scripts -->
+<script src="/resources/Hplus/js/jquery-2.1.1.min.js"></script>
+<script src="/resources/Hplus/js/bootstrap.min.js?v=3.4.0"></script>
+<script src="/resources/Hplus/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="/resources/Hplus/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+
+<script src="/resources/js/common/common.js"></script>
+<script src="/resources/js/common/init.js"></script>

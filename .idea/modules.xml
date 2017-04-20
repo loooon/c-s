@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/credit-common/credit-common.iml" filepath="$PROJECT_DIR$/credit-common/credit-common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/credit-dao/credit-dao.iml" filepath="$PROJECT_DIR$/credit-dao/credit-dao.iml" />
+      <module fileurl="file://$PROJECT_DIR$/credit-entity/credit-entity.iml" filepath="$PROJECT_DIR$/credit-entity/credit-entity.iml" />
+      <module fileurl="file://$PROJECT_DIR$/credit-service/credit-service.iml" filepath="$PROJECT_DIR$/credit-service/credit-service.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/credit-site.iml" filepath="$PROJECT_DIR$/.idea/credit-site.iml" />
+      <module fileurl="file://$PROJECT_DIR$/credit-web/credit-web.iml" filepath="$PROJECT_DIR$/credit-web/credit-web.iml" />
+    </modules>
+  </component>
+</project>

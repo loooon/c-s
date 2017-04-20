@@ -1,0 +1,85 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <meta name="theme-color" content="#ffffff"> 
+	<title>催收黄页</title>
+	<link href="/resources/css/dun/style.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="/resources/js/lib/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="/resources/js/lib/countUp.js"></script>
+    <script type="text/javascript" src="/resources/js/dun/dunCount.js"></script>
+    <script type="text/javascript" src="/resources/js/dun/side.js"></script>
+</head>
+<body>
+	<div class="layout navbar">
+		<a href="#" class="logo">
+			<img src="/resources/img/dun/logo.png" alt="">
+		</a>
+		<ul>
+			<li><a href="/dun/search">查验催收号码</a></li>
+			<li><a href="#">看看他有没有被催收</a></li>
+			<li><a href="/dun/company">集团用户通道</a></li>
+			<li><a href="#">催收号码申诉</a></li>
+		</ul>
+	</div>
+	<div class="header"></div>
+	<div class="number">
+		<p>凭安已发现催收号码总数<span id="dunCount">0</span>个</p>
+	</div>
+	<div class="layout icon">
+		<ul>
+			<a href="/dun/search">
+				<li>
+					<em class="em01"></em>
+					<br>
+					查验催收号码
+				</li>
+			</a>
+			<a href="#">
+			<li>
+				<em class="em02"></em>
+				<br>
+				看看他有没有被催收
+			</li>
+			</a>
+			<a href="/dun/company">
+			<li>
+				<em class="em03"></em>
+				<br>
+				集团用户入口
+			</li>
+			</a>
+			<a href="#">
+			<li style="margin-right: 0;">
+				<em class="em04"></em>
+				<br>
+				批量查询
+			</li>
+			</a>
+		</ul>
+	</div>
+	<div class="copy">
+		<p>Copyright © 2015 水滴信用网shuidixy.com 保留所有权利 沪ICP备12039960号-5</p>
+	</div>
+	<div class="side">        
+        <a href="javascript:void(0)">
+            <div class="side-pic">
+                <div class="pic"></div>
+                <div class="back" style="display: none"></div>
+            </div>
+        </a>
+        <a href="javascript:void(0)">
+            <div class="side-pic01">
+                <div class="pic01"></div>
+                <div class="back01"  style="display: none"></div>
+            </div>
+        </a>
+   </div>    
+</body>
+</html>

@@ -1,0 +1,157 @@
+<%--
+  Created by IntelliJ IDEA.
+  User: Michael Chan
+  Date: 3/8/2017
+  Time: 11:48 AM
+  To change this template use File | Settings | File Templates.
+--%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<div class="m-title clearfix">
+    <div class="m-title-left">详单号码标记</div>
+    <%--<div class="m-title-right"><p class="m-title-t3" id="clear_search_history">清空查询记录</p></div>--%>
+</div>
+<div class="m-content id-verify" id="print_id">
+    <div  class="m-error">
+        ${errorMsg}
+        <c:forEach items="${errMsgList}" var="error">
+            ${error} <br/>
+        </c:forEach>
+    </div>
+    <div class="m-content-b search-content clearfix">
+        <div class="c-left3">
+            <form id="id_check" action="/user/grayscale/report" method="post" enctype="multipart/form-data" target="_blank">
+                <div class="c-left3-content">
+                    <p><label>手机号</label> <input value="18817507350" type="mobile" class="input-type3" maxlength="11" notnul="ture" ajaxmsg="*手机号不为空" msgtip="innerLeft" name="phone"  placeholder="被查询用户的手机号" autocomplete="off"/></p>
+                    <p><label>姓名</label> <input value="xiaoming" type="text" class="input-type3" notnul="ture" ajaxmsg="*姓名不为空" msgtip="innerLeft" name="name"  placeholder="被查询用户的姓名" autocomplete="off"/></p>
+                    <p><label>身份证号</label> <input value="654301199106293912" type="id" class="input-type3" notnul="ture" ajaxmsg="*身份证不为空" msgtip="innerLeft" maxlength="18" name="idcard" des="*身份证" placeholder="请输入身份证号码" autocomplete="off"/></p>
+                    <%--<p><label>手机设备编号</label> <input type="text" class="input-type3" notnul="ture" ajaxmsg="*手机设备编号不为空" msgtip="innerLeft" name="imei"  placeholder="被查询用户的手机设备编号" autocomplete="off"/></p>--%>
+                    <%--<p><label>SIM卡编号</label> <input type="text" class="input-type3" notnul="ture" ajaxmsg="*SIM卡编号不为空" msgtip="innerLeft" name="imsi"  placeholder="被查询用户的SIM卡编号" autocomplete="off"/></p>--%>
+                    <p><label>申请时间</label> <input type="isdate" maxlength="10" class="input-type3" notnul="" ajaxmsg="*申请时间不为空" msgtip="innerLeft" name="applyDateStr"  placeholder="yyyy-MM-dd" autocomplete="off"/></p>
+                    <p><label>详单文件</label>
+                        <input type="file" class="input-type3" notnul="ture" ajaxmsg="*详单文件不为空" msgtip="innerLeft" name="file"/>
+                    </p>
+                    <div class="" id="all_contacts">
+                        <h2 style="margin-bottom: 20px;">联系人</h2>
+                        <div id="contact_div"></div>
+                        <button id="to_add_new_conotact" type="button" style="background-color: green;margin-left: 80%;" class="custombtn2">✚</button>
+                    </div>
+                    <p class="s-bottom" style="    margin-left: 34%;    float: left;">
+                        <button type="submit" id="submit_btn" class="custombtn2">提交</button>
+                    </p>
+                </div>
+            </form>
+        </div>
+        <div class="c-right3">
+            <div class="default"><p><label>查询记录</label></p></div>
+            <div class="loading">
+                <p><span class="limg"></span><label>查询中...</label></p>
+            </div>
+
+            <div class="no-result">
+                <p><label>查询记录</label></p>
+            </div>
+            <c:if test="${not empty userCallDetailsHistories }">
+                <div class="result">
+                    <table class="table-style1">
+                        <tr class="tb-head">
+                            <th class="tb-width1">手机号</th>
+                            <th class="tb-width2">姓名</th>
+                            <th class="tb-width3">身份证</th>
+                            <th class="tb-width4">申请时间</th>
+                            <th class="tb-width7">查询</th>
+                        </tr>
+                        <tr id="search_history_model" style="display: none;" model>
+                            <td>{0}</td>
+                            <td class="c-orange">{1}</td>
+                            <td>{2}</td>
+                            <td class="c-orange">{3}</td>
+                            <td><form action="/user/grayscale/history" method="post" target="_blank">
+                                <input type="hidden" name="id" value="{4}">
+                                <button class="search-btn" type="submit">查询</button>
+                            </form></td>
+                        </tr>
+                        <tbody id="search_history_record">
+                        <c:forEach items="${userCallDetailsHistories.content}" var="searchHistory" varStatus="status">
+                            <tr>
+                                <td>${searchHistory.phone}</td>
+                                <td class="c-orange">${searchHistory.searchUser}</td>
+                                <td>${searchHistory.idcard}</td>
+                                <td class="c-orange">${searchHistory.applyDate}</td>
+                                <td><form action="/user/grayscale/history" method="post" target="_blank">
+                                    <input type="hidden" name="id" value="${searchHistory.id}">
+                                    <button  class="search-btn" type="submit">查询</button></form></td>
+                            </tr>
+                        </c:forEach>
+                        </tbody>
+                    </table>
+                    <div id="altersPage" class="page1" style="float: right;"></div>
+                </div>
+            </c:if></div>
+    </div>
+</div><script type="text/javascript" src="/resources/js/user/Personal.js"></script>
+<script type="text/javascript" src="/resources/js/lib/jquery.pagination.js"></script>
+<script>
+    var personal = new Credit.User.Personal();
+    personal.init();
+    var i=0;
+    $("#to_add_new_conotact").unbind('click').on('click',function () {
+        var contact_div_style="";
+        if(i>0)
+        {
+            contact_div_style="contact-div";
+        }
+        var html='<div class="'+contact_div_style+'"> <p><label>姓名'+(i-0+1)+'</label> '+
+            '<input type="text" maxlength="10" class="input-type3" notnul="ture" ajaxmsg="*联系人姓名不为空" msgtip="innerLeft" name="contactChecks['+i+'].name"  placeholder="联系人姓名" autocomplete="off"/> </p> <p><label>号码</label> '+
+            '<input type="mobile" maxlength="11" class="input-type3" notnul="ture" ajaxmsg="*联系人号码不为空" msgtip="innerLeft" name="contactChecks['+i+'].number"  placeholder="联系人号码" autocomplete="off"/> </p> '+
+            '<p><label>关系</label><span id="select_click"class="select-click"><a href="javascript:void(0)" class="select-switch-d"><img src="/resources/img/user/list_icon.png"></a><input type="text" class="input-type4" notnul="ture" ajaxmsg="*关系不为空" msgtip="innerLeft" id="select-type-d" placeholder="配偶"  name="contactChecks['+i+++'].relation" autocomplete="off"/><!--<input type="text" class="dis-none" id="select-type-d-none" value="111" name="idType" autocomplete="off"/>--></span></p><div class="input-select-d"> <ul> <li code="2">配偶</li><li code="2">亲属</li><li code="2">朋友</li><li code="2">同事</li> </ul> </div></div>';
+        $("#contact_div").append(html);
+        personal.init();
+    });
+
+    var perPageCount='${perPageCount}';
+    $(document).ready(function ()
+    {
+        $(".jump-ipt").val(1);
+    });
+    $('#altersPage').pagination({
+        totalData:'${totalData}',
+        showData:perPageCount,
+        coping:true,
+        homePage:'首页',
+        endPage:'末页',
+        jump: true,
+        prevContent:'上页',
+        nextContent:'下页',
+        activeCls:'current',
+        callback:function(index){
+            var currentPage=index.getCurrent();
+            var currentOffset = (currentPage - 1) * perPageCount;
+            $.ajax({url:'/user/history',
+            async:true,
+            method:'POST',
+            data:{pageCount:currentPage,pageSize:perPageCount},
+            dataType:'json',
+            success:function (response)
+            {
+                if(response.data)
+                {
+                    var data = response.data.content;
+                    var outerHTML = $("#search_history_model").clone().removeAttr("model").removeAttr("style")[0].outerHTML;
+                    var html = "";
+                    data.forEach(function (value, index, array)
+                    {
+                        html += outerHTML.format(array[index].phone,array[index].searchUser,array[index].idcard,array[index].applyDate,array[index].id);
+                    });
+                    $("#search_history_record").html(html);
+                    $(".jump-ipt").val(currentPage);
+                }
+            },
+                error:function ()
+                {
+                }
+            });
+        }
+    });
+
+</script>

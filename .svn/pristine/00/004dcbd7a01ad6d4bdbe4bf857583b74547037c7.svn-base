@@ -1,0 +1,176 @@
+package com.credit.web.model;
+
+import java.util.*;
+
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.CallDetails;
+import com.credit.enumeration.CallModelEnum;
+
+/**
+ * Created by wangjunling on 2017/3/10.
+ */
+public class CallDetailsModel
+{
+
+    /**
+     * 详单集合
+     */
+    private List<CallDetails> callDetailsList;
+
+    /**
+     * 联系人集合
+     */
+    private Set<String> contactSet;
+
+    /**
+     * 主叫详单集合
+     */
+    private List<CallDetails> callOutCallDetailsList;
+
+    /**
+     * 被叫详单集合
+     */
+    private List<CallDetails> callInCallDetailsList;
+
+    /**
+     * 通话时间集合
+     */
+
+    private List<String> callTimeList;
+
+    /**
+     * 通话时间月份集合
+     */
+    private Set<String> monthSet;
+
+    /**
+     * 工作日通话详单
+     */
+    private List<CallDetails> workDayCallDetailsList;
+
+    /**
+     * 休息日通话详单
+     */
+    private List<CallDetails> restDayCallDetailsList;
+
+    /**
+     * 通话时长
+     */
+    private int totalDuration;
+
+    /**
+     * 根据联系人归属地划分的详单map
+     */
+    private Map<String, List<CallDetails>> contactAddrMap;
+
+    public CallDetailsModel(List<CallDetails> callDetailsList)
+    {
+        this.callDetailsList = callDetailsList;
+        init(callDetailsList);
+        for (CallDetails detail : callDetailsList)
+        {
+            String callTimeMonth = getCallTimeMonth(detail.getCallTime());
+            contactSet.add(detail.getContact());
+            if (detail.getCallModel().equals(CallModelEnum.CALL_OUT.getComment()))
+            {
+                callOutCallDetailsList.add(detail);
+            }
+            else
+            {
+                callInCallDetailsList.add(detail);
+            }
+            monthSet.add(callTimeMonth);
+            totalDuration += detail.getDuration();
+            callTimeList.add(detail.getCallTime());
+            // 是否是工作日
+            boolean weekday = TimeUtil.isWeekday(detail.getCallTime());
+            if (weekday)
+                workDayCallDetailsList.add(detail);
+            else
+                restDayCallDetailsList.add(detail);
+
+            List<CallDetails> callDetails;
+            if (contactAddrMap.containsKey(detail.getContactAddr()))
+                callDetails = contactAddrMap.get(detail.getContactAddr());
+            else
+                callDetails = new ArrayList<>();
+            callDetails.add(detail);
+            contactAddrMap.put(detail.getContactAddr(), callDetails);
+        }
+    }
+
+    private void init(List<CallDetails> callDetailsList)
+    {
+        callTimeList = new ArrayList<>(callDetailsList.size());
+        contactSet = new HashSet<>(callDetailsList.size());
+        callOutCallDetailsList = new ArrayList<>();
+        callInCallDetailsList = new ArrayList<>();
+        monthSet = new HashSet<>(callDetailsList.size());
+        totalDuration = 0;
+        workDayCallDetailsList = new ArrayList<>();
+        restDayCallDetailsList = new ArrayList<>();
+        contactAddrMap = new LinkedHashMap<>();
+    }
+
+    public List<CallDetails> getCallDetailsList()
+    {
+        return callDetailsList;
+    }
+
+    public Set<String> getContactSet()
+    {
+        return contactSet;
+    }
+
+    public List<CallDetails> getCallOutCallDetailsList()
+    {
+        return callOutCallDetailsList;
+    }
+
+    public List<CallDetails> getCallInCallDetailsList()
+    {
+        return callInCallDetailsList;
+    }
+
+    public List<String> getCallTimeList()
+    {
+        return callTimeList;
+    }
+
+    public Set<String> getMonthSet()
+    {
+        return monthSet;
+    }
+
+    public List<CallDetails> getWorkDayCallDetailsList()
+    {
+        return workDayCallDetailsList;
+    }
+
+    public List<CallDetails> getRestDayCallDetailsList()
+    {
+        return restDayCallDetailsList;
+    }
+
+    public int getTotalDuration()
+    {
+        return totalDuration;
+    }
+
+    public Map<String, List<CallDetails>> getContactAddrMap()
+    {
+        return contactAddrMap;
+    }
+
+    /**
+     * @param callTimeStr
+     *            格式为yyyy-MM-dd HH:mm:ss
+     * @return
+     */
+    private static String getCallTimeMonth(String callTimeStr)
+    {
+        String[] split = callTimeStr.split("-", 3);
+
+        return split[1];
+    }
+}

@@ -1,0 +1,46 @@
+package com.credit.enumeration;
+
+/**
+ * Created by Michael Chan on 3/16/2017.
+ */
+public enum ActiveEnum
+{
+    /**
+     * cutOffPoint为活跃度标准分界点
+     */
+    ACTIVE("活跃", 12.8), NORMAL("一般", 6.2), INACTIVE("不活跃", 0.0);
+
+    private String name;
+
+    private Double cutOffPoint;
+
+    ActiveEnum(String name, Double cutOffPoint)
+    {
+        this.name = name;
+        this.cutOffPoint = cutOffPoint;
+    }
+
+    public static String getActive(double avgContact)
+    {
+        if (ACTIVE.getCutOffPoint() <= avgContact)
+        {
+            return ACTIVE.getName();
+        }
+        else
+            if (NORMAL.getCutOffPoint() <= avgContact)
+            {
+                return NORMAL.getName();
+            }
+        return INACTIVE.getName();
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public Double getCutOffPoint()
+    {
+        return cutOffPoint;
+    }
+}

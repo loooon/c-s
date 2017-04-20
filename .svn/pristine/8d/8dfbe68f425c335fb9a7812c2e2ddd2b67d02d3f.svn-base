@@ -1,0 +1,287 @@
+USE mysql;
+DROP DATABASE IF EXISTS db_credit_site;
+CREATE DATABASE db_credit_site DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+DELETE FROM user WHERE user = 'credit_site';
+GRANT ALL PRIVILEGES ON db_credit_site.* TO credit_site@'%' IDENTIFIED BY 'PINGAN_Credit_Site@2017!';
+flush privileges;
+
+USE db_credit_site;
+
+DROP TABLE IF EXISTS tb_phone_segment_info;
+CREATE TABLE tb_phone_segment_info (
+	phone_segment VARCHAR(11) NOT NULL UNIQUE PRIMARY KEY COMMENT '号段',
+	province VARCHAR(50) NOT NULL COMMENT '省/直辖市',
+	city VARCHAR(50) NOT NULL COMMENT '市',
+	operator VARCHAR(50) NOT NULL COMMENT '运营商'
+)ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT '号段归属地表';
+
+DROP TABLE IF EXISTS tb_org_type;
+CREATE TABLE tb_org_type (
+	org_type INTEGER NOT NULL PRIMARY KEY COMMENT '机构类型',
+	org_type_name VARCHAR(250) NOT NULL COMMENT '机构类型名称'
+) ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT='机构类型表';
+INSERT INTO tb_org_type(org_type, org_type_name) VALUES (10, '银行');
+INSERT INTO tb_org_type(org_type, org_type_name) VALUES (15, '互联网金融');
+INSERT INTO tb_org_type(org_type, org_type_name) VALUES (17, '消费金融');
+INSERT INTO tb_org_type(org_type, org_type_name) VALUES (20, '催收公司');
+INSERT INTO tb_org_type(org_type, org_type_name) VALUES (25, '律师事务所');
+INSERT INTO tb_org_type(org_type, org_type_name) VALUES (99, '高危');
+
+DROP TABLE IF EXISTS tb_demand_type;
+CREATE TABLE tb_demand_type (
+	demand_type INTEGER NOT NULL PRIMARY KEY COMMENT '需求类型',
+	demand_type_name VARCHAR(250) NOT NULL COMMENT '需求类型名称'
+) ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT='需求类型表';
+INSERT INTO tb_demand_type(demand_type, demand_type_name) VALUES (10, '催收');
+INSERT INTO tb_demand_type(demand_type, demand_type_name) VALUES (15, '客服');
+
+DROP TABLE IF EXISTS tb_number_tag;
+CREATE TABLE tb_number_tag (
+	ntid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+	number VARCHAR(250) NOT NULL UNIQUE COMMENT '号码',
+	number_type INTEGER NOT NULL COMMENT '号码类型:0-固话;1-手机号',
+	org_name VARCHAR(250) COMMENT '机构名称',
+	org_type INTEGER COMMENT '机构类型',
+	org_code VARCHAR(200) COMMENT '机构编码',
+	demand_type INTEGER COMMENT '需求类型',
+	min_date VARCHAR(20) COMMENT '发现的最早日期，格式为:yyyy-MM-dd',
+	max_date VARCHAR(20) COMMENT '最近一次发现的日期，格式为:yyyy-MM-dd',
+	invalid TINYINT NOT NULL DEFAULT '1' COMMENT '是否有效:1-有效 0-无效',
+	batch VARCHAR(50) NOT NULL COMMENT '号码批次',
+	create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT='号码标签表';
+
+DROP TABLE IF EXISTS tb_applicant;
+CREATE TABLE tb_applicant (
+	aid VARCHAR(50) PRIMARY KEY COMMENT 'ID',
+	aname VARCHAR(250) DEFAULT NULL COMMENT '申请人姓名',
+	idcard VARCHAR(250) DEFAULT NULL COMMENT '申请人身份证号',
+	phone VARCHAR(50) DEFAULT NULL COMMENT '申请人手机号',
+	imei VARCHAR(50) DEFAULT NULL COMMENT '设备编码',
+	imsi VARCHAR(50) DEFAULT NULL COMMENT 'SIM卡设备编码',
+	org_sn VARCHAR(250) DEFAULT NULL COMMENT '查询机构',
+	apply_date DATE COMMENT '申请时间',
+	query_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '查询时间',
+	hit TINYINT NOT NULL DEFAULT 0 COMMENT '被命中:0-未命中;1-命中'
+) ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT='申请人表';
+
+DROP TABLE IF EXISTS tb_call_details;
+CREATE TABLE tb_call_details (
+	cdid VARCHAR(50) NOT NULL PRIMARY KEY COMMENT 'ID',
+	aid VARCHAR(50) NOT NULL COMMENT '申请人ID',
+	call_time VARCHAR(100) DEFAULT NULL COMMENT '呼叫时间',
+	duration INTEGER DEFAULT NULL COMMENT '呼叫时长',
+	call_model VARCHAR(50) DEFAULT NULL COMMENT '呼叫模式:主叫/被叫',
+	format_call_model VARCHAR(50) DEFAULT NULL COMMENT '格式化后的呼叫模式',
+	contact VARCHAR(30) NOT NULL COMMENT '联系人',
+	contact_type TINYINT NOT NULL COMMENT '联系人类型:0-固话，1-手机',
+	call_addr VARCHAR(100) DEFAULT NULL COMMENT '呼叫时机主所在地',
+	contact_addr VARCHAR(100) DEFAULT NULL COMMENT '联系人归属地',
+	called_type VARCHAR(100) DEFAULT NULL COMMENT '通话类型:国内/国际/...',
+	cost double DEFAULT NULL COMMENT '费用',
+	create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY(aid) REFERENCES tb_applicant(aid)
+) ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT='申请人详单表';
+
+DROP TABLE IF EXISTS tb_user;
+CREATE TABLE tb_user
+(
+    user_id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    user_no VARCHAR(64),
+    user_name VARCHAR(255),
+    email VARCHAR(255),
+    user_nickname VARCHAR(255),
+    password VARCHAR(255),
+    reg_time DATETIME NOT NULL,
+    visits INT(10),
+    last_logintime DATETIME,
+    user_type INT(11) DEFAULT '1',
+    phone VARCHAR(128),
+    vkey VARCHAR(255),
+    sms_upload_count INT(11) DEFAULT '0' COMMENT '上传短信文本接口已使用次数',
+    dun_number_mark_count INT(4) DEFAULT '0',
+    call_detail_mark_count INT(4) DEFAULT '0',
+    verify_state_code INT(11) NOT NULL,
+    verify_state_name VARCHAR(255),
+    product_name VARCHAR(255),
+    expire_date DATETIME,
+    company_name VARCHAR(255)
+) ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT='用户表';
+INSERT INTO db_credit_site.tb_user (user_id, vkey, user_no, user_name, email, user_nickname, password, reg_time, visits, last_logintime, user_type, phone, sms_upload_count, dun_number_mark_count, call_detail_mark_count) VALUES (null, NULL, '', 'michael', '3111288391@qq.com', 'lon', '69f3d77a9a2de54336d4f45e6dc59e82', '2017-03-08 17:09:36', '53', '2017-03-09 22:47:20', '1', '12345678910', '0', '0', '0');
+INSERT INTO db_credit_site.tb_user (user_id, vkey, user_no, user_name, email, user_nickname, password, reg_time, visits, last_logintime, user_type, phone, sms_upload_count, dun_number_mark_count, call_detail_mark_count) VALUES (null, '20170314114300123', NULL, 'admin', '1169693091@qq.com', 'admin', '67eee9deadba07557bd3cdad1c447d1b', '2017-03-09 09:43:35', '162', '2017-03-16 18:24:58', '1', NULL, '17', '0', '126');
+INSERT INTO db_credit_site.tb_user (user_id, vkey, user_no, user_name, email, user_nickname, password, reg_time, visits, last_logintime, user_type, phone, sms_upload_count, dun_number_mark_count, call_detail_mark_count) VALUES (null, NULL, NULL, '3111288391@qq.com', '3111288391@qq.com', 'alpha', '67eee9deadba07557bd3cdad1c447d1b', '2017-03-09 11:53:14', '0', '2017-03-09 11:53:19', '1', NULL, '0', '0', '0');
+INSERT INTO db_credit_site.tb_user (user_id, vkey, user_no, user_name, email, user_nickname, password, reg_time, visits, last_logintime, user_type, phone, sms_upload_count, dun_number_mark_count, call_detail_mark_count) VALUES (null, '20170330093800234', NULL, 'test', 'test@qq.com', 'test', '14e1b600b1fd579f47433b88e8d85291', '2017-03-09 09:43:35', '162', '2017-03-16 18:24:58', '1', NULL, '0', '0', '0');
+
+DROP TABLE IF EXISTS tb_user_auth_ip;
+CREATE TABLE tb_user_auth_ip (
+  id int(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  user_name varchar(255) DEFAULT NULL,
+  user_vkey varchar(255) DEFAULT NULL,
+  authorized_ip varchar(255) DEFAULT NULL,
+  last_update_time datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='系统用户ip表';
+INSERT INTO db_credit_site.tb_user_auth_ip (id, user_name, user_vkey, authorized_ip, last_update_time) VALUES (null, 'admin', '20170314114300123', '0:0:0:0:0:0:0:1', '2017-03-14 11:44:28');
+INSERT INTO db_credit_site.tb_user_auth_ip (id, user_name, user_vkey, authorized_ip, last_update_time) VALUES (null, 'admin', '20170314114300123', '192.168.108.172', '2017-03-15 16:16:56');
+INSERT INTO db_credit_site.tb_user_auth_ip (id, user_name, user_vkey, authorized_ip, last_update_time) VALUES (null, 'admin', '20170314114300123', '192.168.108.149', '2017-03-15 17:09:53');
+INSERT INTO db_credit_site.tb_user_auth_ip (id, user_name, user_vkey, authorized_ip, last_update_time) VALUES (null, 'admin', '20170314114300123', '127.0.0.1', '2017-03-16 13:23:04');
+
+DROP TABLE IF EXISTS tb_dun_number_query_record;
+CREATE TABLE tb_dun_number_query_record (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  query_phone varchar(50) NOT NULL COMMENT '被查询的号码',
+  auth_file varchar(550) NOT NULL COMMENT '授权文件',
+  file_md5 VARCHAR(255),
+  auth_status int(11) DEFAULT NULL,
+  auth_date datetime DEFAULT NULL,
+  update_date datetime DEFAULT NULL,
+  create_date datetime NOT NULL,
+  contact_phone VARCHAR(50) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='催收号码查询';
+
+DROP TABLE IF EXISTS tb_dun_number_count;
+CREATE TABLE tb_dun_number_count (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  type varchar(255) NOT NULL,
+  count bigint(20) NOT NULL DEFAULT '0' COMMENT '总数',
+  update_date datetime DEFAULT NULL COMMENT '更新时间',
+  create_date datetime NOT NULL COMMENT '创建时间',
+  per_add_count int(11) DEFAULT null COMMENT '每次增加个数',
+  PRIMARY KEY (id),
+  UNIQUE KEY tb_dun_number_count_type_uindex (type)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COMMENT='催收号码数量';
+
+-- ----------------------------
+-- Records of tb_dun_number_count
+-- ----------------------------
+INSERT INTO tb_dun_number_count VALUES ('1', 'find', '2033482', '2017-03-21 10:41:51', '2017-03-21 10:41:54',0);
+INSERT INTO tb_dun_number_count VALUES ('2', 'coverage', '2036687', '2017-03-23 18:13:40', '2017-03-23 18:13:43',0);
+
+DROP TABLE IF EXISTS tb_user_call_details_history;
+CREATE TABLE tb_user_call_details_history
+(
+    id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    user_id INT(11) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    idcard VARCHAR(255) NOT NULL,
+    apply_date VARCHAR(50),
+    call_details_path VARCHAR(255) NOT NULL COMMENT '详单文件路径',
+    file_md5_digest VARCHAR(255) COMMENT 'md5加密上传文件',
+    contact_checks LONGTEXT COMMENT '联系人',
+    create_date DATETIME COMMENT '创建时间',
+    search_user VARCHAR(255),
+    is_delete INT(11)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='详单号码查询记录';
+
+DROP TABLE IF EXISTS tb_company_apply;
+CREATE TABLE tb_company_apply
+(
+    id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    company_name VARCHAR(255) NOT NULL,
+    contacts VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    update_date DATETIME,
+    create_date DATETIME,
+    duty VARCHAR(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='企业申请';
+
+DROP TABLE IF EXISTS tb_dun_number_dist;
+CREATE TABLE tb_dun_number_dist
+(
+    id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    user_phone VARCHAR(255) COMMENT '被催收手机号码',
+    user_phone_province VARCHAR(255) COMMENT '被催收号码省份',
+    call_from_province VARCHAR(255) COMMENT '催收号码省份',
+    from_province_number INT(11) COMMENT '催收号码各省份数量'
+)ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='催收号码分布图';
+
+DROP TABLE IF EXISTS tb_dun_number_search_history;
+CREATE TABLE tb_dun_number_search_history
+(
+    id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    search_phone VARCHAR(255) COMMENT '所查询电话号码',
+    search_ip VARCHAR(255) COMMENT '查询人ip地址',
+    org_type INT(11) COMMENT '所查电话组织机构类型',
+    org_type_name VARCHAR(255) COMMENT '所查电话组织机构名称',
+    demand_type INT(11) COMMENT '所查电话需求类型',
+    demand_type_name VARCHAR(255) COMMENT '所查电话需求名称',
+    search_time DATETIME COMMENT '查询时间',
+    update_time DATETIME
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='催收号码搜索记录';
+
+DROP TABLE IF EXISTS tb_score;
+CREATE TABLE tb_score
+(
+    id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    var_name VARCHAR(255),
+    min INT(11),
+    max INT(11),
+    woe DOUBLE,
+    score DOUBLE
+)ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='催收分数字典';
+
+DROP TABLE IF EXISTS tb_sms;
+CREATE TABLE tb_sms
+(
+  sms_id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  receiver VARCHAR(128) NOT NULL,
+  sms_serial_no VARCHAR(256),
+  sms_code VARCHAR(32),
+  sms_content VARCHAR(1024),
+  sms_state SMALLINT(6),
+  sms_fail_reason VARCHAR(1024),
+  primary_result VARCHAR(2048),
+  create_time DATETIME,
+  lastupdatetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  expire_time DATETIME
+)ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT '手机验证码';
+
+DROP TABLE IF EXISTS tb_site_resource;
+CREATE TABLE tb_site_resource
+(
+    resource_id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    resource_path VARCHAR(500),
+    resource_name VARCHAR(500) NOT NULL,
+    parent_id INT(11),
+    resource_type INT(11) COMMENT '0：普通
+1：接口',
+    update_time DATETIME,
+    create_time DATETIME,
+  resource_status INT(11) NOT NULL DEFAULT 0
+)ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT '查询服务';
+CREATE UNIQUE INDEX tb_resource_resource_id_uindex ON tb_site_resource (resource_id);
+
+INSERT INTO tb_site_resource (resource_id,resource_path,resource_name,parent_id,resource_type,update_time,create_time,resource_status) VALUES ('1', '/service?t=call_detail_number_mark', '详单号码标记', null, '1', '2017-04-01 16:37:17', '2017-04-01 16:37:19',0);
+INSERT INTO tb_site_resource (resource_id,resource_path,resource_name,parent_id,resource_type,update_time,create_time,resource_status) VALUES ('2', '/service?t=call_detail_number_mark_report', '详单号码标记导出pdf', null, '1', '2017-04-01 16:37:17', '2017-04-01 16:37:19',0);
+INSERT INTO tb_site_resource (resource_id,resource_path,resource_name,parent_id,resource_type,update_time,create_time,resource_status) VALUES ('3', '/service?t=dun_number_mark', '催收号码标记', null, '1', '2017-04-01 16:37:17', '2017-04-01 16:37:19',0);
+INSERT INTO tb_site_resource (resource_id,resource_path,resource_name,parent_id,resource_type,update_time,create_time,resource_status) VALUES ('4', '/service?t=grayscale_stat', '染黑度统计', null, '1', '2017-04-01 16:37:17', '2017-04-01 16:37:19',0);
+INSERT INTO tb_site_resource (resource_id,resource_path,resource_name,parent_id,resource_type,update_time,create_time,resource_status) VALUES ('5', '/service?t=structured_result', '获取结构化结果数据', null, '1', '2017-04-10 13:18:38', '2017-04-10 13:18:38',0);
+INSERT INTO tb_site_resource (resource_id,resource_path,resource_name,parent_id,resource_type,update_time,create_time,resource_status) VALUES ('6', '/service?t=upload_text', '上传文本', null, '1', '2017-04-10 13:18:52', '2017-04-10 13:18:52',0);
+
+DROP TABLE IF EXISTS tb_user_permission;
+CREATE TABLE tb_user_permission
+(
+    permission_id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    user_id INT(11) NOT NULL,
+    vkey VARCHAR(225) NOT NULL,
+    resource_id INT(11) NOT NULL,
+    update_time DATETIME,
+    create_date DATETIME,
+    daily_times INT(11) DEFAULT '0' NOT NULL,
+    yearly_times INT(11) DEFAULT '0' NOT NULL
+) ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT '用户拥有查询服务权限';
+
+DROP TABLE IF EXISTS tb_admin;
+CREATE TABLE tb_admin
+(
+    id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    user_name VARCHAR(255) NOT NULL,
+    password VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(255),
+    super_admin INT(11),
+    role VARCHAR(255),
+    create_time DATETIME,
+    update_time DATETIME
+)ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT '管理员表';

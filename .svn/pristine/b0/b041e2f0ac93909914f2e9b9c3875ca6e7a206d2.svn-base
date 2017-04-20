@@ -1,0 +1,13 @@
+package com.credit.service;
+
+import com.credit.entity.DunNumberQueryRecord;
+
+/**
+ * Created by wangjunling on 2017/3/21.
+ */
+public interface DunNumberQueryRecordService
+{
+    DunNumberQueryRecord save(DunNumberQueryRecord record);
+
+	DunNumberQueryRecord searchByFileMd5(String fileMd5);
+}

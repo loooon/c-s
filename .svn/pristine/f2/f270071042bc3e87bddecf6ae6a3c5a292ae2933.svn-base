@@ -1,0 +1,30 @@
+package com.credit.web.task;
+
+import com.credit.common.result.ResultJson;
+import com.credit.common.util.RandomUtil;
+import com.credit.entity.DunNumberCount;
+import com.credit.service.DunNumberCountService;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+
+/**
+ * Created by wangjunling on 2017/3/22.
+ */
+@Component
+public class DunCountTask
+{
+
+	@Resource
+	private DunNumberCountService dunNumberCountService;
+
+	@Scheduled(fixedRate=5000)
+	public void job()
+	{
+		DunNumberCount numberCount = dunNumberCountService.searchOne();
+		int add = RandomUtil.genRandomNumber(1, 50);
+		numberCount.setCount(numberCount.getCount() + add);
+		dunNumberCountService.update(numberCount);
+	}
+}

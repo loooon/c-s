@@ -1,0 +1,27 @@
+package com.credit.service;
+
+import com.credit.entity.UserCallDetailsHistory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
+/**
+ * Created by Michael Chan on 3/21/2017.
+ */
+public interface UserCallDetailsService<T extends UserCallDetailsHistory>
+{
+    Page<UserCallDetailsHistory> searchUserCallDetailHistory(final Integer userId, Pageable pageable);
+
+    void saveUserCallDetailHistory(UserCallDetailsHistory userCallDetailsHistory);
+
+    List<UserCallDetailsHistory> searchUserCallDetails(Integer userId,String phone,String idcard);
+
+    UserCallDetailsHistory searchOneUserCallDetail(String uuid);
+
+    List<String> searchFileMd5Digest();
+
+    String searchFilePath(String newFileMd5Digest);
+
+    List<UserCallDetailsHistory> searchAll();
+}

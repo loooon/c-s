@@ -1,0 +1,94 @@
+body,html{margin:0 auto;min-height:100%; width:100%; color: #444;}
+	body{font-family:"微软雅黑",'Microsoft YaHei',Arial,sans-serif; font-size: 14px;}
+	h1,h2,h3,h4,h5,p,i,b,em{ font-style:normal; font-weight:normal;margin: 0;}
+	ul,li{ list-style:none;}
+	ul{ margin: 0 !important; padding: 0;}
+	*,*:active,*:focus{ outline: 0 none;}
+	img{border:none; vertical-align:middle;}
+	input {outline: none; color:#444; margin:0; padding:0; font-family: "微软雅黑";}
+	table{ table-layout:fixed; width:100%;}
+	label{ margin-bottom:0 !important;}
+	a{text-decoration: none;}
+	a:active{outline:none;}
+
+.col-md-3,.col-sm-6,.col-xs-12,.col-sm-12{padding-right: 0;padding-left: 0;}
+
+@media (min-width: 10px) and (max-width: 320px)  {	
+	.crp-showcase h1 {font-size: 1em; line-height: 24px;}
+	.crp-showcase h1 span{font-size: 1.2em;}
+	.icon-right h3{font-size: 1.0em;line-height: 26px;}
+	.icon-right h4{font-size: 0.7em;line-height: 14px;}
+	.crp-showcase .form-inline .form-control {display: inline-block;width: 50%;}
+	}
+	
+@media (min-width: 321px) and (max-width: 380px)  {	
+	.crp-showcase h1 {font-size: 1.2em;line-height: 24px;}
+	.crp-showcase h1 span{font-size: 1.2em;}
+	.icon-right h3{font-size: 1.2em;line-height: 30px;}
+	.icon-right h4{font-size: 0.8em;line-height: 14px;}
+	.crp-showcase .form-inline .form-control {display: inline-block;width: 50%;}
+	}
+
+
+@media (min-width: 381px) and (max-width:767px) {	
+	.crp-showcase h1 {font-size: 1.4em;line-height: 24px;}
+	.crp-showcase h1 span{font-size: 1.3em;line-height: 36px;}
+	.icon-right h3{font-size: 1.4em;line-height: 31px;}
+	.icon-right h4{font-size: 0.9em;line-height: 20px;}
+	.crp-showcase .form-inline .form-control {display: inline-block;width: 50%;}
+	}
+
+
+
+	
+.navbar{background:#fff;height: auto;min-height: 40px;margin-bottom: 0;padding: 10px 0;}
+.navbar-brand{padding:0;height: auto !important;}
+.navbar-brand > img{margin:0;margin-left: 15px;width: 100%;}
+body.scrolled .navbar-brand > .logo-light{display:none;}
+.navbar-brand{float: left;display: inline-block;width: 62%;}
+.navbar-right{float: right;display: inline-block;border: 1px solid #888;color: #444;border-radius:1px;
+background-color: #f0f0f0;font-size: 0.8em; padding: 3px 7px;margin-right:2%;}
+.navbar-right:hover{color: #444;text-decoration: none;}
+.adv-top{margin-top: 40px;}
+.adv img{width: 100%;}
+.adv-in{width: 100%;background-color: #011825;padding: 7px 0;}
+.adv-in h1{color: #fff;text-align: center;}
+.adv-in h1 span{color: #ff476d;display: inline-block;padding: 0 2px;}
+.icon{margin: 0 auto;width: 100%;}
+.icon-bg01,.icon-bg02{padding: 5% 2% 5% 4%;overflow: hidden;}
+.icon-bg01{background-color: #f1f3f6;}
+.icon-left{width: 13%;float: left;display: inline-block;margin-right: 2%;}
+.icon-left img{width: 100%;}
+.icon-right{width: 85%;float: left;display: inline-block;}
+.icon-right h3{color: #444;}
+.icon-right h4{color: #888;}
+.adv-bot{bottom: 0;}
+.adv-bot img{width: 100%;}
+.adv-input{width: 94%;margin: 0 auto;position: relative;}
+.input-h1{padding-bottom: 3%;margin-top: 10%;}
+.input-h2{padding-bottom: 3%;margin-top: 6%;}
+.adv-input img{position: relative;width: 100%;}
+.adv-input input{position: absolute;border: 0;}
+.input-h1 input{height: 67%;top: 4%;left: 13%;width: 70%;}
+.input-h2 input{height:67%;top: 4%;left: 10%;width: 70%;}
+.adv-input a{position: absolute;right: 0; float: right;top: 0;width: 16%;height: 34px;}
+.input-h1 .apply-p{position: absolute;width: 100%;bottom: -11px;}
+.input-h2 .apply-p{position: absolute;width: 100%;bottom: -11px;}
+.adv-input .apply-p em{color: #c11920;font-size:0.9em;}
+.adv-input .apply-p em img{width: 1.1em;height: 1.1em;margin-right:5px;}
+.adv-result{width: 94%;margin: 0 auto;position: relative;margin-top: 14%;}
+.adv-result img{width: 100%;position: relative;}
+.adv-result h3{font-size: 1.6em;position: absolute;z-index: 9;color: #444;padding: 15% 0 0 21%;}
+.result-block{position: absolute; z-index: 9;width: 100%;}
+.res-left{float: left;display: inline-block;width: 17%;margin: 11% 5% 0 11%;}
+.res-left img{width: 100%;}
+.res-right{width: 66%;float: left;display: inline-block;padding-top: 10%;}
+.res-right h4{color: #4a4a4a;font-size: 19px;line-height: 40px;}
+.res-right h5{color: #4a4a4a;font-size:15px;line-height: 16px;}
+.bot-position{/*position: absolute;*/bottom: 0;}
+
+
+.apply-btn{width: 92%;margin:11% auto 8%;}
+.apply-btn p{margin-left: 27%;}
+.apply-btn input{background-color: #118dd9;color: #fff;width: 50%;height: 36px;line-height: 36px;
+    border: none;color: #fff;}

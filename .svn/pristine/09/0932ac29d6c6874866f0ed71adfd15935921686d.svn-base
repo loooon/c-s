@@ -1,0 +1,71 @@
+package com.credit.common.util;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+
+
+public final class CmdUtils {
+
+	private static final String CHARSET = "UTF-8";
+	private static final Runtime RUNTIME = Runtime.getRuntime();
+	
+	public static List<String> execute(final String cmd, final String[] envp, final String charset) throws Exception {
+		String curCharset = charset;
+		if(curCharset == null || curCharset.trim().length() == 0) {
+			curCharset = CHARSET;
+		}
+		List<String> resultList = new ArrayList<String>();
+		Process process = null;
+		BufferedReader bufferedReader = null;
+		InputStream inputStream = null;
+		try {
+			process = RUNTIME.exec(cmd, envp);
+			inputStream = process.getErrorStream();
+			
+			bufferedReader = new BufferedReader(new InputStreamReader(inputStream, curCharset));
+			String line;
+			while((line = bufferedReader.readLine()) != null) {
+				resultList.add(line);
+			}
+			if(resultList.size() == 0) {
+				inputStream = process.getInputStream();
+				bufferedReader = new BufferedReader(new InputStreamReader(inputStream, curCharset));
+				while((line = bufferedReader.readLine()) != null) {
+					resultList.add(line);
+				}
+			}
+		} finally {
+			try {
+				inputStream.close();
+			} catch (Exception e) {
+			}
+			try {
+				bufferedReader.close();
+			} catch (IOException e) {
+			}
+			try {
+				process.waitFor();
+			} catch (Exception e) {
+			}
+		}
+		return resultList;
+	}
+
+	public static void main(String[] args) throws Exception {
+		List<String> resultList = execute("python D:\\IdeaProject\\credit-site\\credit-web\\src\\main\\resources\\script\\request_tag360.py 95555 95535 10086", null, CHARSET);
+//		List<String> resultList = execute("python D:\\IdeaProject\\credit-site\\credit-web\\src\\main\\resources\\request_tag360.py sdfs sds ss", null, CHARSET);
+		for (String line : resultList) {
+			System.out.println(line);
+			JSONObject jsonObject = JSON.parseObject(line);
+			Object o = jsonObject.get("95555");
+			System.out.println(o);
+		}
+	}
+}

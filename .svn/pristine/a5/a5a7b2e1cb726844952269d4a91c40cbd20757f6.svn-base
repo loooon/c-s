@@ -1,0 +1,64 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <meta name="theme-color" content="#ffffff"> 
+	<title>催收黄页</title>
+</head>
+<body>
+	<div class="header"></div>
+	<div class="number">
+        <p>凭安已发现催收号码<span id="dunCount">0</span>个&nbsp;&nbsp;已覆盖被催收用户<span id="coverageCount">0</span>个</p>
+	</div>
+	<div class="layout icon">
+		<ul>
+			<a href="/dun/search">
+				<li>
+					<em class="em01"></em>
+					<br>
+					查验催收号码
+				</li>
+			</a>
+			<a href="/dun/auth">
+			<li>
+				<em class="em02"></em>
+				<br>
+				看看他有没有被催收
+			</li>
+			</a>
+			<a href="/dun/company">
+			<li>
+				<em class="em03"></em>
+				<br>
+				集团用户入口
+			</li>
+			</a>
+			<a href="/dun/batch" id="batchSearch">
+			<li style="margin-right: 0;">
+				<em class="em04"></em>
+				<br>
+				批量查询
+			</li>
+			</a>
+		</ul>
+	</div>
+    <div id="pop" class="adv res" style="display: none;position: fixed;">
+        <img src="/resources/img/dun/a1.jpg">
+    </div>
+
+<%--<script type="text/javascript">
+    $().ready(function () {
+        $("#batchSearch,#batch").click(function () {
+            malert($("#pop"),null,{});
+        });
+
+    });
+</script>--%>
+</body>
+</html>

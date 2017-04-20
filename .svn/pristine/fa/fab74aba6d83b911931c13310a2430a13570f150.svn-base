@@ -1,0 +1,67 @@
+package utn.uzj.mail;
+
+import utn.util.mail.MailEntry;
+import utn.uzj.config.MailCfg;
+import utn.uzj.config.SysCfg;
+
+public class ResetMailEntry extends MailEntry
+{
+    private String receiver;
+
+    private String resetUrl;
+
+    public ResetMailEntry(String receiver, String resetUrl)
+    {
+        super();
+        this.receiver = receiver;
+        this.resetUrl = resetUrl;
+    }
+
+    public String getContent()
+    {
+        String emailTemplate = MailTemplateFactory.getResetMailTpl();
+        String emailContent = emailTemplate.replaceAll("#resetUrl#", getResetUrl());
+        emailContent = emailContent.replaceAll("#userName#", this.receiver);
+        // emailContent = emailContent.replaceAll("#currentDate#",TimeUtil.format(new Date(), TimeUtil.FORMAT_DATE_ONLY));
+        emailContent = emailContent.replaceAll("#templateTitle#", MailCfg.getInstance().templateTitle);
+        if ("pingansec".equalsIgnoreCase(SysCfg.getInstance().websiteCss))
+        {
+            emailContent = emailContent.replaceAll("#domain#", "https://" + SysCfg.getInstance().domain);
+        }
+        else
+        {
+            emailContent = emailContent.replaceAll("#domain#", "http://" + SysCfg.getInstance().domain);
+        }
+        emailContent = emailContent.replaceAll("#serviceQQ#", SysCfg.getInstance().serviceQQ);
+        emailContent = emailContent.replaceAll("#templateTitle#", MailCfg.getInstance().templateTitle);
+        emailContent = emailContent.replaceAll("#systemEmail#", SysCfg.getInstance().systemMail);
+        emailContent = emailContent.replaceAll("#servicePhone#", SysCfg.getInstance().servicePhone);
+        emailContent = emailContent.replaceAll("#uzjsite#", MailCfg.getInstance().ucssite);
+        return emailContent;
+    }
+
+    public String getReceiver()
+    {
+        return receiver;
+    }
+
+    public String getSubject()
+    {
+        return "重设" + MailCfg.getInstance().templateTitle + "‏密码";
+    }
+
+    public String getResetUrl()
+    {
+        return resetUrl;
+    }
+
+    public void setResetUrl(String resetUrl)
+    {
+        this.resetUrl = resetUrl;
+    }
+
+    public void setReceiver(String receiver)
+    {
+        this.receiver = receiver;
+    }
+}

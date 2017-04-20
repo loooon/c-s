@@ -1,0 +1,63 @@
+package com.credit.web.model;
+
+import com.alibaba.fastjson.annotation.JSONField;
+
+/**
+ * Created by wangjunling on 2017/3/15.
+ */
+public class DunNumberMarkModel
+{
+    // 联系人号码【号码】
+    private String number;
+
+    // 机构类型【行业类型】
+    @JSONField(name = "org_type")
+    private String orgType;
+
+    // 需求类型
+    @JSONField(name = "demand_type")
+    private String demandType;
+
+    @JSONField(name = "last_mark_date")
+    private String lastMarkDate;
+
+    public String getNumber()
+    {
+        return number;
+    }
+
+    public void setNumber(String number)
+    {
+        this.number = number;
+    }
+
+    public String getOrgType()
+    {
+        return orgType;
+    }
+
+    public void setOrgType(String orgType)
+    {
+        this.orgType = orgType;
+    }
+
+    public String getDemandType()
+    {
+        return demandType;
+    }
+
+    public void setDemandType(String demandType)
+    {
+        this.demandType = demandType;
+    }
+
+    public String getLastMarkDate()
+    {
+        return lastMarkDate;
+    }
+
+    public void setLastMarkDate(String lastMarkDate)
+    {
+        this.lastMarkDate = lastMarkDate;
+    }
+}

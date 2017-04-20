@@ -1,0 +1,134 @@
+<%--
+  Created by IntelliJ IDEA.
+  User: Michael Chan
+  Date: 3/8/2017
+  Time: 11:06 AM
+  To change this template use File | Settings | File Templates.
+--%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<div class="m-title">
+    <p class="m-title-t1">个人记录</p>
+    <p class="m-title-t2"> 通过搜索身份证号查看相关查询记录</p>
+</div>
+<div class="m-content">
+    <form id="id_personal" action="/user/recorddetail/?is_search=1" method="post">
+        <div class="m-content-b search-content clearfix">
+            <div class="c-left3">
+                <div class="search-input">
+                    <input type="id" class="input-type1" notnul="ture" ajaxmsg="*身份证不为空" msgtip="innerLeft"
+                           maxlength="18" name="ic_card" des="*身份证" placeholder="请输入身份证号码" autocomplete="off"/><input
+                        type="submit" value="确定" class="custombtn2">
+                </div>
+            </div>
+            <div class="c-right3">
+                <div class="result-on">
+                    <ul>
+                    </ul>
+                    <a class="a-more" href="/user/recorddetail">查看详情&gt;</a>
+                </div>
+                <div class="default">
+                    <p>查询结果</p>
+                </div>
+                <div class="loading">
+                    <p><span class="limg"></span><span>查询中...</span></p>
+                </div>
+                <div class="result-off">
+                    <p>无相关记录</p>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="m-title clearfix">
+    <div class="m-title-left">查询记录</div>
+    <div class="m-title-right">
+        <ul class="all-time">
+            <li class="appoint-t" id="datetimepicker">指定</li>
+            <li class="month">过去30天</li>
+            <li class="current week">过去7天</li>
+        </ul>
+        <div class="date-picker">
+            <div id="datepickerStart" class="hasDatepicker"></div>
+            <span class="date-to">To</span>
+            <div id="datepickerEnd" class="hasDatepicker"></div>
+            <input type="button" value="确定" class="custombtn sure">
+            <input type="button" value="取消" class="custombtn cancel">
+        </div>
+    </div>
+
+</div>
+<div class="m-nav">
+    <ul>
+        <li class="current" count-attr="total">查询次数</li>
+        <li count-attr="overdueClassify" class="">逾期</li>
+        <li count-attr="loanClassify" class="">共债</li>
+        <li count-attr="blacklist" class="">黑名单</li>
+        <li count-attr="logStatistics" class="">其他机构查询</li>
+        <li count-attr="idCheck">身份证验证</li>
+        <li count-attr="bankcardauth" class="">银行卡验证</li>
+        <li count-attr="phoneinfo">电话号码信息</li>
+        <li count-attr="phonetag" class="">电话号码标记</li>
+        <li count-attr="phoneMatch" class="">设备号匹配</li>
+    </ul>
+</div>
+<div class="m-content m-chart-bg">
+    <div class="m-chart" id="consumechart"></div>
+</div>
+<script type="text/javascript" src="/resources/js/user/SearchHistory.js"></script>
+<script>
+    var searchhistory = new Credit.User.SearchHistory();
+    searchhistory.setChartsData({
+        "x": ["20170301", "20170302", "20170303", "20170304", "20170305", "20170306", "20170307"],
+        "total": {
+            "call_total": ["0", "0", "0", "0", "0", "0", "0"],
+            "hit_success": ["0", "0", "0", "0", "0", "0", "0"],
+            "flag": "1"
+        },
+        "overdueClassify": {
+            "call_total": ["0", "0", "0", "0", "0", "0", "0"],
+            "hit_success": ["0", "0", "0", "0", "0", "0", "0"],
+            "flag": "0"
+        },
+        "loanClassify": {
+            "call_total": ["0", "0", "0", "0", "0", "0", "0"],
+            "hit_success": ["0", "0", "0", "0", "0", "0", "0"],
+            "flag": "0"
+        },
+        "blacklist": {
+            "call_total": ["0", "0", "0", "0", "0", "0", "0"],
+            "hit_success": ["0", "0", "0", "0", "0", "0", "0"],
+            "flag": "0"
+        },
+        "logStatistics": {
+            "call_total": ["0", "0", "0", "0", "0", "0", "0"],
+            "hit_success": ["0", "0", "0", "0", "0", "0", "0"],
+            "flag": "0"
+        },
+        "idCheck": {
+            "call_total": ["0", "0", "0", "0", "0", "0", "0"],
+            "hit_success": ["0", "0", "0", "0", "0", "0", "0"],
+            "flag": "0"
+        },
+        "bankcardauth": {
+            "call_total": ["0", "0", "0", "0", "0", "0", "0"],
+            "hit_success": ["0", "0", "0", "0", "0", "0", "0"],
+            "flag": "0"
+        },
+        "phoneinfo": {
+            "call_total": ["0", "0", "0", "0", "0", "0", "0"],
+            "hit_success": ["0", "0", "0", "0", "0", "0", "0"],
+            "flag": "0"
+        },
+        "phonetag": {
+            "call_total": ["0", "0", "0", "0", "0", "0", "0"],
+            "hit_success": ["0", "0", "0", "0", "0", "0", "0"],
+            "flag": "0"
+        },
+        "phoneMatch": {
+            "call_total": ["0", "0", "0", "0", "0", "0", "0"],
+            "hit_success": ["0", "0", "0", "0", "0", "0", "0"],
+            "flag": "0"
+        }
+    });
+    searchhistory.init();
+</script>

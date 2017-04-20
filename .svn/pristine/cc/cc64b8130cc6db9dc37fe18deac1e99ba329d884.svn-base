@@ -1,0 +1,112 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="An open-source monitoring system with a dimensional data model, flexible query language, efficient time series database and modern alerting approach.">
+    <meta name="keywords" content="prometheus, monitoring, monitoring system, time series, time series database, alerting, metrics, telemetry">
+    <meta name="author" content="Prometheus">
+    <meta name="theme-color" content="#ffffff">
+	<title>催收黄页</title>
+	<!--<link rel="stylesheet" type="text/css" href="/assets/css/site.min.css?v=a77632e6b4" />-->
+	<link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+	<link href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+	<!--<link href="/assets/css/site.min.css" rel="stylesheet">-->
+	<link href="/resources/css/dun/mobile/style.css" type="text/css" rel="stylesheet" />
+
+    <script type="text/javascript" src="/resources/js/lib/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="/resources/js/lib/countUp.js"></script>
+    <script type="text/javascript" src="/resources/js/dun/dunCount.js"></script>
+    <script type="text/javascript" src="/resources/js/dun/dunIndex.js"></script>
+</head>
+<body>
+	<nav class="navbar navbar-fixed-top">
+		<div class="container">
+			<div class="navbar-header">
+				<a href="/dun/index" class="navbar-brand">
+					<img class="logo-light" src="/resources/img/dun/mobile/logo.png" alt="">
+				</a>
+			</div>
+		</div>
+	</nav>
+    <div class="adv adv-top">
+    	<a href="#"><img src="/resources/img/dun/mobile/header-bg.jpg"></a>
+    </div>
+    <div class="adv adv-in">
+    	<p>查验催收号码</p>
+<%--    	<div class="adv-inmain">
+	    	<img  id="searchBtn" src="/resources/img/dun/mobile/in01.jpg">
+	    	<input type="text" id="numberTxt" placeholder="输入电话号码（固话需要添加区号）">
+    	</div>--%>
+        <div class="adv-lk">
+            <span><img src="/resources/img/dun/mobile/search.png"></span>
+            <input type="text" id="numberTxt" placeholder="输入电话号码（固话需要添加区号）" class="adv-lk-in1">
+            <input type="button" id="searchBtn"  value="查一查" class="adv-lk-in2">
+        </div>
+    </div>
+    <div class="adv res" id="tip" style="display: none;">
+        <img src="/resources/img/dun/mobile/adv03.jpg">
+        <div class="content crp-showcase">
+            <div class="col-sm-12 res-main">
+                <h2 class="sourehan text-center animated fadeInDown">互联网金融·高危</h2>
+            </div>
+        </div>
+    </div>
+<%--    <div class="adv res">
+        <img src="/resources/img/dun/mobile/adv04.jpg">
+        <div class="content crp-showcase">
+            <div class="col-sm-12 res-main">
+                <h2 class="sourehan text-center animated fadeInDown">互联网金融·催收</h2>
+            </div>
+        </div>
+    </div>
+    <div class="adv res">
+        <img src="/resources/img/dun/mobile/adv05.jpg">
+        <div class="content crp-showcase">
+            <div class="col-sm-12 res-main">
+                <h2 class="sourehan text-center animated fadeInDown">互联网金融·普通</h2>
+            </div>
+        </div>
+    </div>
+    <div id="al" class="adv res">
+        <img src="/resources/img/dun/mobile/adv06.jpg">
+        <div class="content crp-showcase">
+            <div class="col-sm-12 res-main">
+                <h2 class="sourehan text-center animated fadeInDown">互联网金融·客服</h2>
+            </div>
+        </div>
+    </div>--%>
+    <div id="pop" class="adv res" style="display: none">
+        <img src="/resources/img/dun/mobile/pop.png">
+    </div>
+    <div class="adv res" id="noData" style="display: none;">
+        <img src="/resources/img/dun/mobile/adv07.jpg">
+        <div class="content crp-showcase">
+            <div class="col-sm-12 res-main">
+                <h3 class="sourehan text-center animated fadeInDown">在凭安的<span id="dunCountFormat">160万</span>催收号码库中</h3>
+                <h2 class="sourehan text-center animated fadeInDown">未发现该号码</h2>
+            </div>
+        </div>
+    </div>
+    <div class="adv icon">
+    	<div class="icon-main">
+	    	<a href="javascript:void(0)" name="popBtn"><img src="/resources/img/dun/mobile/icon01.png"></a>
+	    	<a href="javascript:void(0)" name="popBtn"><img src="/resources/img/dun/mobile/icon02.png"></a>
+    	</div>
+    </div>
+    <div class="adv number">
+    	<img src="/resources/img/dun/mobile/adv01.jpg"><a href="/dun/company" class="number-link"></a>
+        <div class="content crp-showcase">
+		<div class="col-sm-12 adm">
+            <h1 class="sourehan text-center animated fadeInDown">凭安已发现<span id="dunCount">0</span>个催收号码</h1>
+		</div>
+		</div>    	    	
+    </div>        
+    <div class="adv adv-bot">
+    	<img src="/resources/img/dun/mobile/adv08.jpg">
+    </div>
+	
+</body>
+</html>

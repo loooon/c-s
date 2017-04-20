@@ -1,0 +1,96 @@
+package com.credit.service.impl;
+
+import com.credit.entity.UserCallDetailsHistory;
+import com.credit.repository.UserCallDetailsRepository;
+import com.credit.service.UserCallDetailsService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Created by Michael Chan on 3/21/2017.
+ */
+@Service("userCallDetailsService")
+public class UserCallDetailsServiceImpl implements UserCallDetailsService<UserCallDetailsHistory>
+{
+    @Resource
+    private UserCallDetailsRepository userCallDetailsRepository;
+
+    @Override
+    public Page<UserCallDetailsHistory> searchUserCallDetailHistory(final Integer userId, final Pageable pageable)
+    {
+        Specification<UserCallDetailsHistory> userCallDetailsHistorySpecification = new Specification<UserCallDetailsHistory>()
+        {
+            @Override
+            public Predicate toPredicate(Root<UserCallDetailsHistory> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder)
+            {
+                List<Predicate> predicates = new ArrayList<>();
+                if (userId != null && userId != 0)
+                {
+                    Predicate predicate = criteriaBuilder.equal(root.get("userId"), userId);
+                    predicates.add(predicate);
+                }
+                if (pageable.getSort() != null)
+                {
+//                    Predicate predicate = criteriaBuilder.desc(root.get("createDate"), );
+//                    predicates.add(predicate);
+//                    criteriaQuery.where(criteriaBuilder.and(p3,cb.or(p1,p2)));
+                    //添加排序的功能
+                    criteriaQuery.where(criteriaBuilder.and(predicates.toArray(new Predicate[]{})));
+                    criteriaQuery.orderBy(criteriaBuilder.desc(root.get("createDate").as(Date.class)));
+                }
+//                criteriaBuilder.desc(predicates.add();)
+                return criteriaQuery.getRestriction();
+            }
+        };
+
+        return userCallDetailsRepository.findAll(userCallDetailsHistorySpecification,pageable);
+    }
+
+    @Override
+    public void saveUserCallDetailHistory(UserCallDetailsHistory userCallDetailsHistory)
+    {
+        userCallDetailsRepository.save(userCallDetailsHistory);
+    }
+
+    @Override
+    public List<UserCallDetailsHistory> searchUserCallDetails(Integer userId, String phone, String idcard)
+    {
+        return userCallDetailsRepository.findByUserIdAndPhoneAndIdcard(userId,phone,idcard);
+    }
+
+    @Override
+    public UserCallDetailsHistory searchOneUserCallDetail(String uuid)
+    {
+        return userCallDetailsRepository.findOneByUuid(uuid);
+    }
+
+    @Override
+    public List<String> searchFileMd5Digest()
+    {
+        return userCallDetailsRepository.findAllFileMd5Digest();
+    }
+
+    @Override
+    public String searchFilePath(String newFileMd5Digest)
+    {
+        return userCallDetailsRepository.findFilePath(newFileMd5Digest);
+    }
+
+    @Override
+    public List<UserCallDetailsHistory> seachAll()
+    {
+        return userCallDetailsRepository.findAll();
+    }
+}

@@ -1,0 +1,25 @@
+package com.credit.service.impl;
+
+import com.credit.entity.UserPermission;
+import com.credit.repository.UserPermissionRepository;
+import com.credit.service.UserPermissionService;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+/**
+ * Created by Michael Chan on 3/31/2017.
+ */
+@Service("userPermissionService")
+public class UserPermissionServiceImpl implements UserPermissionService<UserPermission>
+{
+    @Resource
+    private UserPermissionRepository userPermissionRepository;
+
+    @Override
+    public List<UserPermission> searchPermissionByVKey(String vKey)
+    {
+        return userPermissionRepository.findByVKey(vKey);
+    }
+}

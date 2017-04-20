@@ -1,0 +1,13 @@
+package com.credit.service;
+
+import com.credit.entity.DunNumberCount;
+
+/**
+ * Created by wangjunling on 2017/3/21.
+ */
+public interface DunNumberCountService
+{
+	DunNumberCount searchOne();
+
+	void update(DunNumberCount numberCount);
+}

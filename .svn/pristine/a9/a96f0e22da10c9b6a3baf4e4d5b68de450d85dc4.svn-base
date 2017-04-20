@@ -1,0 +1,119 @@
+package com.credit.web.controller.open.blackbox.bean;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+
+/**
+ * Created by wangjunling on 2017/3/8.
+ */
+public class CallDetail
+{
+    private String call_time;
+
+    private String duration;
+
+    private String call_model;
+
+    private String contact;
+
+    private String call_addr;
+
+    private String contact_addr;
+
+    private String called_type;
+
+    public String getCall_time()
+    {
+        return call_time;
+    }
+
+    public void setCall_time(String call_time)
+    {
+        this.call_time = call_time;
+    }
+
+    public String getDuration()
+    {
+        return duration;
+    }
+
+    public void setDuration(String duration)
+    {
+        this.duration = duration;
+    }
+
+    public String getCall_model()
+    {
+        return call_model;
+    }
+
+    public void setCall_model(String call_model)
+    {
+        this.call_model = call_model;
+    }
+
+    public String getContact()
+    {
+        return contact;
+    }
+
+    public void setContact(String contact)
+    {
+        this.contact = contact;
+    }
+
+    public String getCall_addr()
+    {
+        return call_addr;
+    }
+
+    public void setCall_addr(String call_addr)
+    {
+        this.call_addr = call_addr;
+    }
+
+    public String getContact_addr()
+    {
+        return contact_addr;
+    }
+
+    public void setContact_addr(String contact_addr)
+    {
+        this.contact_addr = contact_addr;
+    }
+
+    public String getCalled_type()
+    {
+        return called_type;
+    }
+
+    public void setCalled_type(String called_type)
+    {
+        this.called_type = called_type;
+    }
+
+    public static CallDetail toEntity(String[] strings)
+    {
+        CallDetail callDetail = new CallDetail();
+        callDetail.setCall_time(strings[0]);
+        callDetail.setDuration(strings[1]);
+        callDetail.setCall_model(strings[2]);
+        callDetail.setContact(strings[3]);
+        callDetail.setCall_addr(strings[4]);
+        callDetail.setContact_addr(strings[5]);
+        callDetail.setCalled_type(strings[6]);
+        return callDetail;
+    }
+	public static CallDetail toEntity(JSONObject jsonObject)
+	{
+		CallDetail callDetail = new CallDetail();
+		callDetail.setCall_time(jsonObject.getString("call_time"));
+		callDetail.setDuration(jsonObject.getString("duration"));
+		callDetail.setCall_model(jsonObject.getString("call_model"));
+		callDetail.setContact(jsonObject.getString("contact"));
+		callDetail.setCall_addr(jsonObject.getString("call_addr"));
+		callDetail.setContact_addr(jsonObject.getString("contact_addr"));
+		callDetail.setCalled_type(jsonObject.getString("called_type"));
+		return callDetail;
+	}
+}

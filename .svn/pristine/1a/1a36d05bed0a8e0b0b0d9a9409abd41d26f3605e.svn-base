@@ -1,0 +1,18 @@
+package com.credit.web.util;
+
+import com.credit.web.model.CallDetailsModel;
+import com.credit.web.model.ContactAreaStat;
+
+import java.util.List;
+
+/**
+ * Created by wangjunling on 2017/3/13.
+ */
+public class ContactAreaUtil
+{
+	public static void build(CallDetailsModel callDetailsModel, List<ContactAreaStat> contactAreaList){
+
+
+
+	}
+}

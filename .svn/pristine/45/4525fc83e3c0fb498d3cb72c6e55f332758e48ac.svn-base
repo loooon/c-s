@@ -1,0 +1,73 @@
+package com.credit.service.impl;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.entity.User;
+import com.credit.repository.UserRepository;
+import com.credit.service.UserService;
+
+/**
+ * Created by wangjunling on 2017/3/7.
+ */
+@Service("userService")
+public class UserServiceImpl implements UserService
+{
+    @Resource
+    private UserRepository userRepository;
+
+    @Override
+    public User save(User user)
+    {
+        return userRepository.save(user);
+    }
+
+    public User search(Integer id)
+    {
+        return userRepository.findOne(id);
+    }
+
+    @Override
+    public User searchUserByName(String userName) throws ServiceException
+    {
+        return userRepository.findByUserNickName(userName);
+    }
+
+    @Override
+    public User searchUserByPhone(String phone) throws ServiceException
+    {
+        return userRepository.findByPhone(phone);
+    }
+
+    @Override
+    public User updateUserLoginTime(User user) throws ServiceException
+    {
+        user.setLastLoginTime(new Date());
+        Integer visits = user.getVisits() == null ? 0 : user.getVisits();
+        user.setVisits(visits + 1);
+        return userRepository.save(user);
+    }
+
+    @Override
+    public User searchByVkey(String vkey)
+    {
+        return userRepository.findByVKey(vkey);
+    }
+
+    @Override
+    public User update(User user)
+    {
+        return userRepository.saveAndFlush(user);
+    }
+
+    @Override
+    public List<User> searchAll()
+    {
+        return userRepository.findAll();
+    }
+}

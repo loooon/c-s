@@ -1,0 +1,43 @@
+<%--
+  Created by IntelliJ IDEA.
+  User: admin
+  Date: 3/8/2017
+  Time: 10:22 AM
+  To change this template use File | Settings | File Templates.
+--%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<div class="l-nav">
+    <ul id="user_nav_id">
+       <%-- <li>
+            <div class="tit current">
+                <img src="/resources/img/user/nav_all_on.png"><span>概况</span></div>
+            <ul>
+                <li class="nav-l current" data-nav="digest/alldata|support|notice" hr="/digest/alldata">整体数据</li>
+                <li class="nav-l" data-nav="digest/history" hr="/digest/history">查询记录</li>
+            </ul>
+        </li>--%>
+        <li>
+            <div class="tit">
+                <img src="/resources/img/user/nav_search.png"><span>查询</span>
+            </div>
+            <ul>
+                <li class="nav-l" data-nav="search/personal" hr="/search/personal">详单号码标记</li>
+            </ul>
+        </li>
+     <%--   <li>
+            <div class="tit">
+                <img src="/resources/img/user/nav_user.png"><span>账户</span>
+            </div>
+            <ul>
+                <li class="nav-l" data-nav="account/charge" hr="/account/charge">充值记录</li>
+                <li class="nav-l" data-nav="account/consume" hr="/account/consume">消费记录</li>
+                <li class="nav-l" data-nav="account/password" hr="/account/password">修改密码</li>
+            </ul>
+        </li>--%>
+    </ul>
+</div>
+
+<script type="text/javascript">
+    var nav= new Credit.Nav();
+    nav.init();
+</script>

@@ -1,0 +1,176 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <meta name="theme-color" content="#ffffff"> 
+	<title>查验催收-催收黄页</title>
+	<link href="/resources/css/dun/style.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="/resources/js/lib/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="/resources/js/lib/countUp.js"></script>
+    <script type="text/javascript" src="/resources/js/dun/dunCount.js"></script>
+    <script type="text/javascript" src="/resources/js/dun/side.js"></script>
+</head>
+<body>
+<div class="layout navbar">
+    <a href="/dun/index" class="logo">
+        <img src="/resources/img/dun/logo.png" alt="">
+    </a>
+    <ul>
+        <li><a href="/dun/search">查验催收号码</a></li>
+        <li><a href="/dun/auth">看看他有没有被催收</a></li>
+        <li><a href="/dun/company">集团用户通道</a></li>
+        <li><a href="/dun/batch">批量查询</a></li>
+    </ul>
+</div>
+<div class="nub">
+    <h4 id="dunCount"></h4>
+    <h5>  凭安已发现催收号码总数</h5>
+</div>
+<div class="index">
+    <div class="layout index-main">
+
+            <div id="result" class="index-left index-left01">
+                <div class="index-wz">
+                   <p>查询结果</p>
+                    <%--      <p>文字产品介绍文</p>
+                         <p>文字产品介绍</p>
+                         <p>文字产品介</p>
+                         <p>文字</p>--%>
+                </div>
+            </div>
+
+        <div id="noData" class="index-left index-left04" style="display: none;">
+            <div class="index-wz">
+                <p>在凭安的<span id="dunCountFormat"></span></p>
+                <p>催收号码库中</p>
+                <p>未发现该号码</p>
+            </div>
+        </div>
+
+<%--        <div class="index-left index-left02">
+            <div class="index-wz">
+            <p>互联网金融</p>
+            <p>风险号码</p>
+            </div>
+        </div>
+        <div class="index-left index-left03">
+            <div class="index-wz">
+            <p>互联网金融</p>
+            <p>客服</p>
+            </div>
+        </div>
+        <div id="noData" class="index-left index-left04" style="display: none;">
+            <div class="index-wz">
+            <p>在凭安的<span> id="dunCountFormat"</span>万</p>
+            <p>催收号码库中</p>
+            <p>未发现该号码</p>
+            </div>
+        </div>
+        <div class="index-left index-left05">
+            <div class="index-wz">
+            <p>互联网金融</p>
+            <p>催收</p>
+            </div>
+        </div>
+        <div class="index-left index-left06">
+            <div class="index-wz">
+            <p>互联网金融</p>
+            <p>普通</p>
+            </div>
+        </div>--%>
+        <div class="index-right">
+            <h4>查验催收号码</h4>
+            <div class="index-in">
+                <input type="text" id="numberTxt" placeholder="请输入您要查验的电话号码" class="index-in1" />
+                <input type="button" id="searchBtn" value="查一查" class="index-in2">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="copy">
+    <p>Copyright © 2015 水滴信用网shuidixy.com 保留所有权利 沪ICP备12039960号-5</p>
+</div>
+<div class="side">
+    <a href="javascript:void(0)">
+        <div class="side-pic">
+            <div class="pic"></div>
+            <div class="back" style="display: none"></div>
+        </div>
+    </a>
+    <a href="javascript:void(0)">
+        <div class="side-pic01">
+            <div class="pic01"></div>
+            <div class="back01" style="display: none"></div>
+        </div>
+    </a>
+</div>
+</body>
+</html>
+<script>
+    $(document).ready(function () {
+        $("#searchBtn").click(function () {
+            var phone = $("#numberTxt").val();
+            if(!phone||phone==""||$.trim(phone)==""){
+                return;
+            }
+            $.ajax({
+                url: "/dun/query",
+                method: "GET",
+                dataType: "json",
+                data: {phone: phone},
+                success: function (data) {
+                    if (data.result == 200) {
+                        var data = data.data;
+                        var css = "index-left06";
+                        var orgTypeName="";
+                        var demandTypeName="";
+                        if(data.orgType){
+                            orgTypeName=  data.orgType.orgTypeName;
+                        }
+                        if(data.demandType){
+                            demandTypeName=data.demandType.demandTypeName;
+                            if(data.demandType.demandType==10){
+                                css = "index-left05";
+                            }else  if(data.demandType.demandType==15){
+                                css = "index-left03";
+                            }
+                        }else{
+                            css= "index-left02";
+                        }
+
+                        var model =
+                            '<p>'+ orgTypeName+'</p>'+
+                            '<p>'+demandTypeName+'</p>';
+                        $("#result").removeClass();
+                        $("#result").addClass("index-left");
+                        $("#result").addClass(css);
+                        $("#result").find("div").html(model);
+                        $("#result").show();
+                    }
+                    else {
+                        var count = $("#dunCount").text();
+                        count = count.replace(new RegExp(",", 'g'),'');
+                        if(count.toString().length>4){
+                            var number = parseInt(count)/10000;
+                            $("#dunCountFormat").text(number.toString().substring(0,number.toString().length-5)+"万");
+                        }else{
+                            $("#dunCountFormat").text(count);
+                        }
+                        $("#result").removeClass();
+                        $("#result").addClass("index-left");
+                        $("#result").addClass("index-left04");
+                        $("#result").html($("#noData").html());
+                    }
+                }
+            })
+        });
+
+    });
+</script>

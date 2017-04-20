@@ -1,0 +1,19 @@
+package com.credit.repository;
+
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+
+import com.credit.base.JpaBaseRepository;
+import com.credit.entity.DunNumberCount;
+
+/**
+ * Created by wangjunling on 2017/3/21.
+ */
+
+public interface DunNumberCountRepository extends JpaBaseRepository<DunNumberCount, Integer>
+{
+
+    @Modifying
+    @Query(value = "update tb_dun_number_count set count = (count + ?1) where type = ?2",nativeQuery = true)
+    void updateCount(int i, String type);
+}

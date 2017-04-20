@@ -1,0 +1,70 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<meta name="keywords" content="">
+	<meta name="author" content="">
+	<meta name="theme-color" content="#ffffff">
+	<title>批量查询-催收黄页</title>
+</head>
+<body>
+<div class="header02"></div>
+<div class="number">
+	<p>凭安已发现催收号码总数<span>1,601,711 </span>个</p>
+</div>
+<div class="layout">
+	<div class="file">
+		<span class="file-font"><i>*</i>待查询号码文件：</span>
+		<span class="file-input">
+				<input type="text" value="" class="file-in1">
+				<input type="button" value="" class="file-in2">
+			</span>
+		<p class="apply-p"><em><img src="/resources/img/dun/infor.png">上传号码文件（支持文件格式txt、csv）</em></p>
+	</div>
+</div>
+<div class="result">
+	<div class="layout">
+		<div class="result-block">
+			<div class="res-left">
+				<img src="images/icon5.png">
+			</div>
+			<div class="res-right">
+				<h4>互联网金融·客服</h4>
+				<h5>电话号码：021-33533026</h5>
+			</div>
+		</div>
+		<div class="result-block">
+			<div class="res-left">
+				<img src="images/icon6.png">
+			</div>
+			<div class="res-right">
+				<h4>互联网金融·催收</h4>
+				<h5>电话号码：021-33533026</h5>
+			</div>
+		</div>
+		<div class="result-block">
+			<div class="res-left">
+				<img src="images/icon7.png">
+			</div>
+			<div class="res-right">
+				<h4>互联网金融·普通</h4>
+				<h5>电话号码：021-33533026</h5>
+			</div>
+		</div>
+		<div class="result-block">
+			<div class="res-left">
+				<img src="images/icon8.png">
+			</div>
+			<div class="res-right">
+				<h4>互联网金融·风险号码</h4>
+				<h5>电话号码：021-33533026</h5>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

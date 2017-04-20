@@ -1,0 +1,48 @@
+package com.credit.enumeration;
+
+/**
+ * Created by Michael Chan on 3/16/2017.
+ */
+public enum Stability
+{
+    STABILITY("稳定", 0.9), INSTABILITY("不稳定", 0.0);
+
+    private String name;
+
+    private Double code;
+
+    Stability(String name, Double code)
+    {
+        this.name = name;
+        this.code = code;
+    }
+
+    public static String getStability(double avgCall)
+    {
+        if (STABILITY.getCode() <= avgCall)
+        {
+            return STABILITY.getName();
+        }
+        return INSTABILITY.getName();
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
+    }
+
+    public Double getCode()
+    {
+        return code;
+    }
+
+    public void setCode(Double code)
+    {
+        this.code = code;
+    }
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="An open-source monitoring system with a dimensional data model, flexible query language, efficient time series database and modern alerting approach.">
+    <meta name="keywords" content="prometheus, monitoring, monitoring system, time series, time series database, alerting, metrics, telemetry">
+    <meta name="author" content="Prometheus">
+    <meta name="theme-color" content="#ffffff"> 
+	<title>批量查询-催收黄页</title>
+	<link href="css/style.css" type="text/css" rel="stylesheet" />
+</head>
+<body>
+	<div class="layout navbar">
+		<a href="#" class="logo">
+			<img src="images/logo.png" alt="">
+		</a>
+		<ul>
+			<li><a href="#">查验催收号码</a></li>
+			<li><a href="#">看看他有没有被催收</a></li>
+			<li><a href="#">集团用户通道</a></li>
+			<li><a href="#">催收号码申诉</a></li>
+		</ul>
+	</div>
+	<div class="header02"></div>
+	<div class="number">
+		<p>凭安已发现催收号码总数<span>1,601,711 </span>个</p>
+	</div>
+	<div class="layout">
+		<div class="file">
+			<span class="file-font"><i>*</i>待查询号码文件：</span>
+			<span class="file-input">
+				<input type="text" value="" class="file-in1">
+				<input type="button" value="" class="file-in2">
+			</span>
+			<p class="apply-p"><em><img src="images/infor.png">上传号码文件（支持文件格式txt、csv）</em></p>
+		</div>
+	</div>
+	<div class="apply-content">
+		<div class="apply-input">
+	    	
+	    	
+	    	    	
+	    	
+	    	
+	    </div>
+    </div>
+	<div class="copy">
+		<p>Copyright © 2015 水滴信用网shuidixy.com 保留所有权利 沪ICP备12039960号-5</p>
+	</div>
+	<div class="side">        
+        <a href="javascript:void(0)">
+            <div class="side-pic">
+                <div class="pic"></div>
+                <div class="back"></div>
+            </div>
+        </a>
+        <a href="javascript:void(0)">
+            <div class="side-pic01">
+                <div class="pic01"></div>
+                <div class="back01"></div>
+            </div>
+        </a>
+   </div>    
+</body>
+</html>

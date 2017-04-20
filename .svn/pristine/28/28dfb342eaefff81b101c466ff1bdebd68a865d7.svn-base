@@ -1,0 +1,152 @@
+package com.credit.service.impl;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+
+import com.google.common.collect.Maps;
+import org.apache.commons.lang.StringUtils;
+import org.apache.velocity.app.VelocityEngine;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+import org.springframework.ui.velocity.VelocityEngineUtils;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.service.EmailService;
+
+/**
+ * Created by Michael Chan on 3/9/2017.
+ */
+@Service("emailService")
+public class EmailServiceImpl implements EmailService
+{
+    @Resource
+    private JavaMailSender javaMailSender; // 注入Spring封装的javamail，Spring的xml中已让框架装配
+
+    @Resource
+    private SimpleMailMessage simpleMailMessage;
+
+    @Resource
+    TaskExecutor taskExecutor; // 注入Spring封装的异步执行器
+
+    private static org.slf4j.Logger logger = LoggerFactory.getLogger(EmailServiceImpl.class);
+
+    private static VelocityEngine velocityEngine = null;
+
+    private static Map<String, Object> proMap = null;
+
+    private static final String FIND_PASSWORD = "找回密码";
+
+    private static final String PASSWORD_TEMPLATE_LOCATION = "conf/findPassword.vm";
+
+    static
+    {
+        proMap = new HashMap<>();
+        proMap.put("resource.loader", "class");
+        proMap.put("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+    }
+
+    public static VelocityEngine getVelocityEngineInstance()
+    {
+        if (null == velocityEngine)
+        {
+            synchronized (VelocityEngine.class)
+            {
+                if (null == velocityEngine)
+                {
+                    velocityEngine = new VelocityEngine();
+                    for (Map.Entry<String, Object> entry : proMap.entrySet())
+                    {
+                        velocityEngine.setProperty(entry.getKey(), entry.getValue());
+                    }
+                }
+            }
+        }
+        return velocityEngine;
+    }
+
+    /**
+     * @param password  密码
+     * @throws ServiceException
+     */
+    @Override
+    public void findPassword(String password) throws ServiceException, MessagingException
+    {
+        String date = TimeUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss");
+        Map<String, Object> model = Maps.newHashMap();
+        model.put("reset_time", date);
+        model.put("random_password", password);
+        String text = VelocityEngineUtils.mergeTemplateIntoString(getVelocityEngineInstance(),
+                PASSWORD_TEMPLATE_LOCATION, "UTF-8", model);
+        sendMailByAsynchronousMode(FIND_PASSWORD, text);
+    }
+
+    /**
+     * 发送邮件
+     * @param subject   邮件主题
+     * @param text  邮件模板
+     * @throws ServiceException
+     * @throws MessagingException
+     */
+    @Override
+    public void sendEmail(String subject, String text) throws ServiceException, MessagingException
+    {
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper messageHelper;
+        messageHelper = new MimeMessageHelper(message, true, "UTF-8");
+        messageHelper.setFrom(simpleMailMessage.getFrom());
+        messageHelper.setTo(simpleMailMessage.getTo());
+        if (StringUtils.isNotBlank(subject))
+        {
+            messageHelper.setSubject(subject);
+        }
+        else
+        {
+            messageHelper.setSubject(simpleMailMessage.getSubject());
+        }
+        messageHelper.setText(text, true); // true 表示启动HTML格式的邮件
+        messageHelper.setSentDate(new Date());
+        javaMailSender.send(message);
+    }
+
+    /**
+     * 异步发送邮件
+     * @param subject
+     * @param text
+     * @throws ServiceException
+     * @throws MessagingException
+     */
+    public void sendMailByAsynchronousMode(final String subject, final String text)
+    {
+        taskExecutor.execute(new Runnable()
+        {
+            public void run()
+            {
+                try
+                {
+                    logger.info("EmailServiceImpl::start::开始发送邮件.......!");
+                    sendEmail(subject, text);
+                    logger.info("EmailServiceImpl::end::成功发送邮件.......!");
+                }
+                catch (ServiceException e)
+                {
+                    logger.error("EmailServiceImpl::发送邮件失败.......!");
+                }
+                catch (MessagingException e)
+                {
+                    logger.error("EmailServiceImpl::发送邮件失败.......!");
+                }
+            }
+        });
+    }
+
+}

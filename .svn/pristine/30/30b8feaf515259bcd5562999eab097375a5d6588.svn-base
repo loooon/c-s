@@ -1,0 +1,163 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <meta name="theme-color" content="#ffffff"> 
+	<title>填写信息-催收黄页</title>
+</head>
+<body>
+	<%--<div class="nub">
+		<h4 id="dunCount">0</h4>
+		<h5>凭安已发现催收号码总数</h5>
+	</div>
+	<div class="index">
+		<div class="in-main">
+			<div class="write">
+				<div class="write-content">
+					<h2><img src="/resources/img/dun/icon9.png">请填写被催收人信息</h2>
+					<div class="from-input">
+                        <form id="authForm">
+						<div class="from-block">
+							<p><span><i>*</i>手机号：</span><input id="phone" name="phone" type="text" placeholder="请输入查询人手机号"></p>
+							<p id="phoneMessage" class="b1" style="display: none"><em><img src="/resources/img/dun/infor.png">请输入正确的手机号</em></p>
+						</div>
+						<div class="from-block">
+							<p>
+								<span><i>*</i>授权文件：</span>
+								<div class="from-file">									
+									<input type="file" id="file" name="file" value="选择上传文件">
+									<b style="text-overflow: ellipsis;overflow: hidden;white-space: nowrap; width: 200px;" id="fileTxt">选择上传文件</b>
+								</div>
+								
+							</p>
+							<p id="fileMessage" class="b2" style="display: none"><em><img src="/resources/img/dun/infor.png">请选择文件</em></p>
+							<p id="fileMessageSize" class="b2" style="display: none"><em><img src="/resources/img/dun/infor.png">请上传2M以内的文件</em></p>
+						</div>
+
+						<div class="from-block-btn">
+							<p><span></span><input id="submitApply" type="button" value="查一查"></p>
+						</div>
+                        </form>
+					</div>
+					
+				</div>
+			</div>
+		</div>
+	</div>
+--%>
+    <div class="header04"></div>
+    <div class="number">
+        <p>凭安已发现催收号码<span id="dunCount">0</span>个&nbsp;&nbsp;已覆盖被催收用户<span id="coverageCount">0</span>个</p>
+    </div>
+    <div class="from">
+        <form id="authForm">
+        <div class="from-block">
+            <p><i><img src="/resources/img/dun/icon12.png"></i><input type="text" id="phone" name="phone" type="text" placeholder="请输入查询人手机号"></p>
+            <p id="phoneMessage" class="b1" style="display: none"><img src="/resources/img/dun/infor.png"><em>请输入正确的手机号</em></p>
+        </div>
+        <div class="from-block">
+            <p>
+                <i><img src="/resources/img/dun/icon13.png"></i>
+            <div class="from-file">
+                <input type="file" value="选择上传文件"  id="file" name="file" >
+                <b style="text-overflow: ellipsis;overflow: hidden;white-space: nowrap; width: 200px;" id="fileTxt">选择上传文件</b>
+            </div>
+            </p>
+            <p id="fileMessage" class="b2" style="display: none"><em><img src="/resources/img/dun/infor.png">请选择文件</em></p>
+            <p id="fileMessageSize" class="b2" style="display: none"><em><img src="/resources/img/dun/infor.png">请上传2M以内的文件</em></p>
+        </div>
+        <div class="from-block-btn">
+            <p id="resultMessage" style="display: none"  class="b2" ><em><img src="/resources/img/dun/infor.png">保存失败请重试！</em></p>
+            <p><span></span><input type="button"  id="submitApply" value="查一查"></p>
+        </div>
+        </form>
+    </div>
+    <div class="container">
+        <div class="layout exp">
+            <img src="/resources/img/dun/tit.png">
+            <p>本人因向 <input type="text" value="" />申请信贷业务，特授权<input type="text" value="" />在本人信贷业务申请阶段及业务存续期间，向上海凭安征信服务有限公司查询本
+                人个人信息及信用信息，用于本人信贷业务申请与后续管理，超出上述授权查询的一切后果及法律责任由<input type="text" value="" />承担。</p>
+            <img src="/resources/img/dun/exp.jpg">
+        </div>
+    </div>
+    <div class="pop" style="display: none">
+        <h2><a href="javascript:void(0)"><img src="/resources/img/dun/close.png"></a><span>查询结果</span></h2>
+        <div class="pop-border">
+            <div class="res-left">
+                <img src="/resources/img/dun/icon9.png">
+            </div>
+            <div class="res-right">
+                <h3>恭喜您，提交成功</h3>
+                <h3>我们将尽快与您联系</h3>
+            </div>
+        </div>
+        <input type="button" style="cursor:pointer" value="继续查询" />
+    </div>
+    <script>
+        $().ready(function () {
+            $("#file").change(function () {
+                if($(this).val()!=''){
+                    $("#fileTxt").text($("#file").val());
+                }else{
+                    $("#fileTxt").text('选择上传文件');
+                }
+            });
+            $("#submitApply").click(function () {
+                $("#phoneMessage,#fileMessage,#fileMessageSize,#resultMessage").hide();
+                var phone = $("#phone").val();
+                if(phone == ''||(!phone.isMobile()&&!phone.isPhone()))
+                {
+                    $("#phoneMessage").show();
+                    return;
+                }
+                var filePath = $("#file").val();
+                if(filePath == ''){
+                    $("#fileMessage").show();
+                    return;
+                }
+
+                var file=$('#file')[0];
+                var byteSize  = file.files[0].size;
+
+
+                if (byteSize > 2097152) {
+                    $("#fileMessageSize").show();
+                    $("#fileTxt").text('选择上传文件');
+                    $("#file").val('');
+                    return;
+                }
+                var formData = new FormData($("#authForm")[0]);
+
+                $.ajax({
+                    url: "/dun/auth",
+                    method: "POST",
+                    data: formData,
+                    dataType:'json',
+                    async:true,
+                    contentType: false, //必须false才会避开jQuery对 formdata 的默认处理 XMLHttpRequest会对 formdata 进行正确的处理
+                    processData: false, //必须false才会自动加上正确的Content-Type
+                    success: function (data) {
+                        if (data.result==0) {
+                            malert($(".pop"),$("a,input"),{timeout:3000});
+                            $("#file").val('');
+                            $("#phone").val('');
+                            $("#fileTxt").text('选择上传文件');
+                        }
+                        else {
+                            $("#resultMessage").show();
+                        }
+                    }
+                });
+            });
+        });
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+package utn.cfg.store;
+
+import utn.cfg.ConfigObj;
+
+/**
+ * 保存配置的存储接口
+ * 
+ * <p>
+ * 由于具体的配置可能存储在Ini文件、XML文件、数据库或Properties文件等，抽象出一个接口来统一这些配置存储媒介，
+ * 上层不用再关注具体的底层存储方式
+ * 
+ * @author xuji
+ * @version 1.0
+ * @since 1.0
+ */
+public interface IConfigStore 
+{
+    /**
+     * 从store中得到配置对象
+     * @param cfgObj 可配置对象 
+     */
+    public void getFromStore(ConfigObj cfgObj);
+    
+    /**
+     * 将配置对象写入store，可以在此时保存数据，也可以在save中执行保存
+     * @param cfgObj 可配置对象
+     */
+    public void setToStore(ConfigObj cfgObj) throws Exception;
+
+    /**
+     * 保存配置，可能不只一个配置对象
+     * @throws Exception
+     */ 
+    public void save() throws Exception;
+}
+

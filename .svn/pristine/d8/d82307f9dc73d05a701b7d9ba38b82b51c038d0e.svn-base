@@ -1,0 +1,92 @@
+package com.credit.service.impl;
+
+import javax.annotation.Resource;
+
+import com.credit.common.exception.ErrorCode;
+import com.credit.common.exception.ServiceException;
+import com.credit.common.util.security.DigestUtils;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+
+import com.credit.entity.User;
+import com.credit.repository.UserRepository;
+import com.credit.service.UserService;
+
+import java.util.Date;
+
+/**
+ * Created by wangjunling on 2017/3/7.
+ */
+@Service("userService")
+public class UserServiceImpl implements UserService
+{
+
+    @Resource
+    private UserRepository userRepository;
+
+    @Override
+    public User save(User user)
+    {
+        return userRepository.save(user);
+    }
+
+    public User search(Integer id){
+    	return userRepository.findOne(id);
+	}
+
+    @Override
+    public User login(User user) throws ServiceException
+    {
+        try
+        {
+            User record = searchUserByName(user.getUserName());
+            if (record == null)
+            {
+                throw new ServiceException(ErrorCode.ILLEGAL_REQUEST, "找不到对应的用户");
+            }
+
+            String passWordRecord = record.getPassword();
+
+            // 重新计算摘要
+            String originalStr = record.getUserNo() + user.getPassword();
+            String hash = DigestUtils.md5(DigestUtils.md5(originalStr.getBytes("UTF-8")).getBytes("UTF-8"));
+            if (!hash.equals(passWordRecord))
+            {
+                return null;
+            }
+            return record;
+        }
+        catch (HibernateException e)
+        {
+            e.printStackTrace();
+            throw new ServiceException(ErrorCode.DB_ERROR, "查询用户密码信息失败" + e.getMessage(), e);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new ServiceException(ErrorCode.DB_ERROR, e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public User searchUserByName(String userName) throws ServiceException
+    {
+        return userRepository.findByUserName(userName);
+    }
+
+    @Override
+    public User updateUserLoginTime(User user) throws ServiceException
+    {
+        try
+        {
+            user.setLastLoginTime(new Date());
+            user.setVisits(user.getVisits() + 1);
+            return userRepository.save(user);
+        }
+        catch (HibernateException e)
+        {
+            e.printStackTrace();
+            throw new ServiceException(ErrorCode.DB_ERROR, "更新用户登录信息失败" + e.getMessage(), e);
+        }
+    }
+}

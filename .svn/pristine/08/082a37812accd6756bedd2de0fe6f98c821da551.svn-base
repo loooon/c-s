@@ -1,0 +1,344 @@
+package com.credit.web.controller;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import com.credit.common.cache.CacheFactory;
+import com.credit.common.cache.ICache;
+import com.credit.common.util.servlet.RequestUtil;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.common.result.ResultJson;
+import com.credit.common.util.CollectionUtil;
+import com.credit.common.util.RandomUtil;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.DunNumberCount;
+import com.credit.entity.DunNumberQueryRecord;
+import com.credit.entity.NumberTag;
+import com.credit.service.DunNumberCountService;
+import com.credit.service.DunNumberQueryRecordService;
+import com.credit.service.cache.NumberTagCache;
+import com.credit.web.model.DunNumberMarkModel;
+
+/**
+ * Created by wangjunling on 2017/3/21.
+ */
+@Controller
+@RequestMapping("/dun")
+public class DunYellowPageController extends AbstractBaseController
+{
+    @Resource
+    private DunNumberCountService dunNumberCountService;
+
+    @Resource
+    private DunNumberQueryRecordService dunNumberQueryRecordService;
+
+    @Value("${dun.query.max.times}")
+    private Integer dunQueryMaxTimes;
+
+    @Resource
+    TaskExecutor asyncExecutor;
+
+    @Value("${auth.file.path}")
+    private String tempFilePath;
+
+    @RequestMapping(value = "/index", method = RequestMethod.GET)
+    public String index()
+    {
+        return "dun/index";
+    }
+	@RequestMapping(value = "/search", method = RequestMethod.GET)
+	public String search()
+	{
+		return "dun/search";
+	}
+
+	@RequestMapping(value = "/m/index", method = RequestMethod.GET)
+	public String mIndex()
+	{
+		return "dun/mobile/index";
+	}
+
+    @RequestMapping(value = "/query", method = RequestMethod.GET)
+    @ResponseBody
+    public ResultJson index(String phone,HttpServletRequest request)
+    {
+        if (StringUtils.isBlank(phone))
+        {
+            return new ResultJson().paramError();
+        }
+        try
+        {
+
+            if (isFluentQuery(request))
+            {
+                return new ResultJson().error(ResultJson.STATUS_CODE_FAIL,"频率过快，请稍后再试!");
+            }
+
+            NumberTag numberTag = NumberTagCache.getInstance().getNumberTagCacheData(phone);
+            if (numberTag == null)
+            {
+                return new ResultJson().noData();
+            }
+            return new ResultJson().success(numberTag);
+        }
+        catch (Exception e)
+        {
+            logger.error("获取numberTag异常", e);
+            return new ResultJson().error();
+        }
+
+    }
+
+    private static final ICache<String, Integer> ipCache = CacheFactory.getInstance().newCache(1, TimeUnit.DAYS, 100000);
+
+    private boolean isFluentQuery(HttpServletRequest request) throws Exception
+    {
+        String ip = RequestUtil.getRequestIP(request);
+        Integer value = ipCache.get(ip);
+        if (value != null)
+        {
+            if (value > dunQueryMaxTimes-1)
+            {
+                return true;
+            }else
+            {
+                ipCache.cache(ip, ++value);
+                return false;
+            }
+        }
+        ipCache.cache(ip, 1);
+        return false;
+    }
+
+    @RequestMapping(value = "/count", method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson count()
+    {
+        try
+        {
+            DunNumberCount numberCount = dunNumberCountService.searchOne();
+            return new ResultJson().success(numberCount.getCount());
+        }
+        catch (Exception e)
+        {
+            logger.error("查询dunNumberCount异常", e);
+            return new ResultJson().error();
+        }
+    }
+
+    @RequestMapping(value = "/query/batch", method = RequestMethod.GET)
+    public String batch()
+    {
+        return "dun/batch";
+    }
+
+    @RequestMapping(value = "/query/result", method = RequestMethod.GET)
+    public String batchResult()
+    {
+        return "dun/result";
+    }
+
+    @RequestMapping(value = "/query/batch", method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson batch(HttpServletRequest request, @RequestParam("file") MultipartFile file, ModelMap model)
+    {
+        // 将当前上下文初始化给 CommonsMutipartResolver （多部分解析器）
+        CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver(request.getSession()
+                .getServletContext());
+        multipartResolver.setDefaultEncoding("utf-8");
+        MultipartFile multipartFile;
+        // 检查form中是否有enctype="multipart/form-data"
+
+
+        String path = request.getSession().getServletContext().getRealPath("upload");
+        String fileName = file.getOriginalFilename();
+
+
+        if (!multipartResolver.isMultipart(request))
+        {
+            return new ResultJson().paramError("上传的文本文件为空");
+        }
+        // 将request变成多部分request
+        MultipartHttpServletRequest multiRequest = (MultipartHttpServletRequest) request;
+        // 获取multiRequest 中所有的文件名
+        multipartFile = multiRequest.getFile("text");
+      /*  if (multipartFile == null)
+        {
+            return new ResultJson().paramError("上传的文本文件为空");
+        }*/
+        List<String> numberList;
+        try
+        {
+            InputStream inputStream =file.getInputStream();
+            System.out.println(inputStream);
+//            numberList = IOUtils.readLines(multipartFile.getInputStream());
+            numberList = IOUtils.readLines(inputStream);
+            if (CollectionUtil.isEmpty(numberList))
+            {
+                return new ResultJson().paramError("上传文件内容为空");
+            }
+        }
+        catch (IOException e)
+        {
+            logger.error("读取文件异常", e);
+            return new ResultJson().error();
+        }
+        Set<String> numberSet = new TreeSet<>(numberList);
+        List<NumberTag> resultList = new ArrayList<>();
+        NumberTagCache instance = NumberTagCache.getInstance();
+        try
+        {
+            for (String s : numberSet)
+            {
+                NumberTag numberTag = instance.getNumberTagCacheData(s);
+                if (numberTag == null)
+                {
+                    continue;
+                }
+                DunNumberMarkModel numberMark = new DunNumberMarkModel();
+                numberMark.setNumber(s);
+                if (numberTag.getDemandType() != null)
+                {
+                    numberMark.setDemandType(numberTag.getDemandType().getDemandTypeName());
+                }
+                if (numberTag.getOrgType() != null)
+                {
+                    numberMark.setOrgType(numberTag.getOrgType().getOrgTypeName());
+                }
+                if (numberTag.getPhoneNumber() == null)
+                {
+//                    numberMark.setOrgType(numberTag.getPhoneNumber());
+                    numberTag.setPhoneNumber(numberMark.getNumber());
+                }
+                resultList.add(numberTag);
+            }
+            if (resultList.size() == 0)
+            {
+                return new ResultJson().noData();
+            }
+            return new ResultJson().success(resultList);
+        }
+        catch (ServiceException e)
+        {
+            logger.error(e.getMessage(), e);
+            return new ResultJson().error(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/auth", method = RequestMethod.GET)
+    public String auth()
+    {
+        return "dun/auth";
+    }
+
+    @RequestMapping(value = "/auth", method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson batch(String phone, HttpServletRequest request)
+    {
+        if (StringUtils.isBlank(phone))
+        {
+            return new ResultJson().paramError("手机号不能为空");
+        }
+        // 将当前上下文初始化给 CommonsMutipartResolver （多部分解析器）
+        CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver(request.getSession()
+                .getServletContext());
+        multipartResolver.setDefaultEncoding("utf-8");
+        MultipartFile multipartFile;
+        // 检查form中是否有enctype="multipart/form-data"
+        if (!multipartResolver.isMultipart(request))
+        {
+            return new ResultJson().paramError("授权文件为空");
+        }
+        // 将request变成多部分request
+        MultipartHttpServletRequest multiRequest = (MultipartHttpServletRequest) request;
+        // 获取multiRequest 中所有的文件名
+        multipartFile = multiRequest.getFile("file");
+        if (multipartFile == null)
+        {
+            return new ResultJson().paramError("授权文件为空");
+        }
+        String fileMd5;
+        try
+        {
+            InputStream inputStream = multipartFile.getInputStream();
+            fileMd5 = DigestUtils.md5Hex(inputStream);
+        }
+        catch (IOException e)
+        {
+            logger.error("文件读取异常", e);
+            return new ResultJson().error("文件读取异常");
+        }
+
+        List<DunNumberQueryRecord> oldRecordList = dunNumberQueryRecordService.searchByFileMd5(fileMd5);
+        String fileAbsolutePath;
+        if (oldRecordList == null||oldRecordList.size()==0)
+        {
+
+            Calendar calendar = Calendar.getInstance();
+            String filePath = tempFilePath + calendar.get(Calendar.YEAR) + "/" + (calendar.get(Calendar.MONTH) + 1)
+                    + "/" + calendar.get(Calendar.DAY_OF_MONTH);
+            String suffix = multipartFile.getOriginalFilename().substring(
+                    multipartFile.getOriginalFilename().lastIndexOf("."));
+            String fileName = TimeUtil.format(calendar.getTime(), "yyyyMMddHHmmssSSS") + suffix;
+            File destFile = new File(filePath);
+            if (!destFile.exists())
+            {
+                boolean mkdirs = destFile.mkdirs();
+            }
+            try
+            {
+                File file = new File(destFile.getAbsolutePath() + "/" + fileName);
+                multipartFile.transferTo(file);
+                fileAbsolutePath = file.getAbsolutePath();
+            }
+            catch (IOException e)
+            {
+                logger.error("保存文件异常", e);
+                return new ResultJson().error();
+            }
+        }
+        else
+        {
+            fileAbsolutePath = oldRecordList.get(0).getAuthFile();
+        }
+        try
+        {
+            Date now = new Date();
+            DunNumberQueryRecord record = new DunNumberQueryRecord();
+            record.setAuthFile(fileAbsolutePath);
+            record.setAuthStatus(0);
+            record.setQueryPhone(phone);
+            record.setCreateDate(now);
+            record.setUpdateDate(now);
+            record.setFileMd5(fileMd5);
+            dunNumberQueryRecordService.save(record);
+        }
+        catch (Exception e)
+        {
+            logger.error("保存提交信息异常", e);
+            return new ResultJson().error();
+        }
+        return new ResultJson().success();
+    }
+}

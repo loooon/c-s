@@ -1,0 +1,460 @@
+package com.credit.web.model;
+
+import java.util.*;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.common.util.MathUtil;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.CallDetails;
+import com.credit.entity.NumberTag;
+import com.credit.enumeration.CallModelEnum;
+import com.credit.enumeration.PeriodicContactEnum;
+import com.credit.service.cache.NumberTagCache;
+
+/**
+ * Created by wangjunling on 2017/3/10.
+ */
+public class CallDetailsModel
+{
+
+	/**
+	 * 详单集合
+	 */
+	private List<CallDetails> callDetailsList;
+
+	/**
+	 * 联系人
+	 */
+	private Map<String, List<CallDetails>> contactMap;
+
+	/**
+	 * 通话时间集合/从小打到排序
+	 */
+
+	private List<String> callTimeList;
+
+	/**
+	 * 通话时间月份集合
+	 */
+	private Set<String> monthSet;
+
+	/**
+	 * 工作日通话详单
+	 */
+	private List<CallDetails> workingDayCallDetailsList;
+
+	/**
+	 * 休息日通话详单
+	 */
+	private List<CallDetails> weekendCallDetailsList;
+
+	/**
+	 * 通话时长
+	 */
+	private int totalDuration;
+
+	/**
+	 * 根据联系人归属地划分的详单map key:归属地 value{ key:手机号 value:详单list }
+	 */
+	private Map<String, Map<String, List<CallDetails>>> contactAddrMap;
+
+	/**
+	 * 一线城市
+	 */
+	private int callOutFirstTierCitiesCount = 0;
+
+	private String maxContactAddr;
+
+	/**
+	 * top_call_out_stat
+	 */
+	private Map<String, Integer> contactAndTotalTimesMap;// 包含联系电话号码 及相应的通话总次数
+
+	private Map<String, Integer> callOutCount;// 包含联系电话号码及相应的主叫通话总次数
+
+	private Map<String, Integer> callOutDuration;// 包含联系电话号码及相应的主叫通话总时长
+
+	private Map<String, Integer> callInDuration;// 被叫总时长
+
+	private Map<String, Integer> callInCount;// 被叫总次数
+
+	private Map<String, Set<Long>> contactCallTimeMap;
+
+	private Map<String, Double> contactPeriodicMap;
+
+	private Map<String, Double> contactFrequencyMap;
+
+	private int periodicContactCount = 0;
+
+	private Date applyDate;
+
+
+	public CallDetailsModel(List<CallDetails> callDetailsList, Date applyDate)
+	{
+		this.callDetailsList = callDetailsList;
+        if (applyDate != null)
+        {
+            this.applyDate = applyDate;
+        }
+		init(callDetailsList);
+		int maxContactAddrTime = 0;
+		for (CallDetails detail : callDetailsList)
+		{
+			String callTime = detail.getCallTime();
+			if (StringUtils.isNotBlank(callTime))
+			{
+
+				String callTimeMonth = getCallTimeMonth(callTime);
+				monthSet.add(callTimeMonth);
+				// 是否是工作日
+				boolean weekday = TimeUtil.isWeekday(callTime);
+				if (weekday)
+					workingDayCallDetailsList.add(detail);
+				else
+					weekendCallDetailsList.add(detail);
+
+				Date callTimeDate = TimeUtil.parse(callTime, TimeUtil.FORMAT_DATE_ONLY);
+				if (callTimeDate != null)
+				{
+                    if (this.applyDate == null || this.applyDate.getTime() < callTimeDate.getTime())
+                    {
+                        this.applyDate = callTimeDate;
+                    }
+
+					Set<Long> callTimeLongSet = contactCallTimeMap.get(detail.getContact());
+					if (callTimeLongSet == null)
+					{
+						callTimeLongSet = new TreeSet<>();
+					}
+					callTimeLongSet.add(callTimeDate.getTime());
+					contactCallTimeMap.put(detail.getContact(),callTimeLongSet);
+				}
+				callTimeList.add(detail.getCallTime());
+			}
+
+			List<CallDetails> details = contactMap.get(detail.getContact());
+			if (details == null)
+			{
+				details = new ArrayList<>();
+			}
+			details.add(detail);
+			contactMap.put(detail.getContact(), details);
+
+			totalDuration += detail.getDuration();
+
+			Map<String, List<CallDetails>> contactDetailMap = contactAddrMap.get(detail.getContactAddr());
+			if (contactDetailMap != null)
+			{
+				if (contactDetailMap.size() > maxContactAddrTime)
+				{
+					maxContactAddrTime = contactDetailMap.size();
+					maxContactAddr = detail.getContactAddr();
+				}
+				List<CallDetails> detailsList = contactDetailMap.get(detail.getContact());
+				if (detailsList == null)
+				{
+					detailsList = new ArrayList<>();
+				}
+				detailsList.add(detail);
+				contactDetailMap.put(detail.getContact(), detailsList);
+			}
+			else
+			{
+				contactDetailMap = new LinkedHashMap<>();
+				List<CallDetails> detailsList = new ArrayList<>();
+				detailsList.add(detail);
+				contactDetailMap.put(detail.getContact(), detailsList);
+			}
+			contactAddrMap.put(detail.getContactAddr(), contactDetailMap);
+			if (isFirstTierCity(detail.getContactAddr())
+					&& detail.getFormatCallModel().equals(CallModelEnum.CALL_OUT.getComment()))
+			{
+				callOutFirstTierCitiesCount++;
+			}
+
+			/**
+			 * 处理top10主叫被叫联系电话
+			 */
+			// 统计通话总次数
+			if (contactAndTotalTimesMap.containsKey(detail.getContact()))
+			{
+				contactAndTotalTimesMap.put(detail.getContact(), contactAndTotalTimesMap.get(detail.getContact()) + 1);
+			}
+			else
+			{
+				contactAndTotalTimesMap.put(detail.getContact(), 1);
+			}
+			if (detail.getFormatCallModel().equals(CallModelEnum.CALL_OUT.getComment()))
+			{
+				// 统计主叫总时长
+				if (callOutDuration.containsKey(detail.getContact()))
+				{
+					callOutDuration.put(detail.getContact(),
+							detail.getDuration() + callOutDuration.get(detail.getContact()));
+				}
+				else
+				{
+					callOutDuration.put(detail.getContact(), detail.getDuration());
+				}
+
+				// 统计主叫总次数
+				if (callOutCount.containsKey(detail.getContact()))
+				{
+					callOutCount.put(detail.getContact(), callOutCount.get(detail.getContact()) + 1);
+				}
+				else
+				{
+					callOutCount.put(detail.getContact(), 1);
+				}
+
+			}
+			else
+			{
+				// 统计被叫总时长
+				if (callInDuration.containsKey(detail.getContact()))
+				{
+					callInDuration.put(detail.getContact(),
+							detail.getDuration() + callInDuration.get(detail.getContact()));
+				}
+				else
+				{
+					callInDuration.put(detail.getContact(), detail.getDuration());
+				}
+
+				// 统计被叫总次数
+				if (callInCount.containsKey(detail.getContact()))
+				{
+					callInCount.put(detail.getContact(), callInCount.get(detail.getContact()) + 1);
+				}
+				else
+				{
+					callInCount.put(detail.getContact(), 1);
+				}
+			}
+		}
+		calculatePeriodicContact();
+		calculateActive();
+	}
+
+	private void init(List<CallDetails> callDetailsList)
+	{
+		callTimeList = new ArrayList<>(callDetailsList.size());
+		contactMap = new LinkedHashMap<>();
+		monthSet = new HashSet<>(callDetailsList.size());
+		totalDuration = 0;
+		workingDayCallDetailsList = new ArrayList<>();
+		weekendCallDetailsList = new ArrayList<>();
+		contactAddrMap = new LinkedHashMap<>();
+		contactAndTotalTimesMap = new HashMap<>();
+		callOutCount = new HashMap<>();
+		callOutDuration = new HashMap<>();
+		callInDuration = new HashMap<>();
+		callInCount = new HashMap<>();
+		contactCallTimeMap = new HashMap<>();
+		contactPeriodicMap = new HashMap<>();
+		contactFrequencyMap = new HashMap<>();
+	}
+
+	public Date getApplyDate() {
+		return applyDate;
+	}
+
+	public List<CallDetails> getCallDetailsList()
+	{
+		return callDetailsList;
+	}
+
+	public Map<String, List<CallDetails>> getContactMap()
+	{
+		return contactMap;
+	}
+
+	public List<String> getCallTimeList()
+	{
+		return callTimeList;
+	}
+
+	public Set<String> getMonthSet()
+	{
+		return monthSet;
+	}
+
+	public List<CallDetails> getWorkingDayCallDetailsList()
+	{
+		return workingDayCallDetailsList;
+	}
+
+	public List<CallDetails> getWeekendCallDetailsList()
+	{
+		return weekendCallDetailsList;
+	}
+
+	public int getTotalDuration()
+	{
+		return totalDuration;
+	}
+
+	public Map<String, Map<String, List<CallDetails>>> getContactAddrMap()
+	{
+		return contactAddrMap;
+	}
+
+	public int getCallOutFirstTierCitiesCount()
+	{
+		return callOutFirstTierCitiesCount;
+	}
+
+	public String getMaxContactAddr()
+	{
+		return maxContactAddr;
+	}
+
+	public Map<String, Integer> getContactAndTotalTimesMap()
+	{
+		return contactAndTotalTimesMap;
+	}
+
+	public void setContactAndTotalTimesMap(Map<String, Integer> contactAndTotalTimesMap)
+	{
+		this.contactAndTotalTimesMap = contactAndTotalTimesMap;
+	}
+
+	public Map<String, Integer> getCallOutCount()
+	{
+		return callOutCount;
+	}
+
+	public void setCallOutCount(Map<String, Integer> callOutCount)
+	{
+		this.callOutCount = callOutCount;
+	}
+
+	public Map<String, Integer> getCallOutDuration()
+	{
+		return callOutDuration;
+	}
+
+	public void setCallOutDuration(Map<String, Integer> callOutDuration)
+	{
+		this.callOutDuration = callOutDuration;
+	}
+
+	public Map<String, Integer> getCallInDuration()
+	{
+		return callInDuration;
+	}
+
+	public void setCallInDuration(Map<String, Integer> callInDuration)
+	{
+		this.callInDuration = callInDuration;
+	}
+
+	public Map<String, Integer> getCallInCount()
+	{
+		return callInCount;
+	}
+
+	public void setCallInCount(Map<String, Integer> callInCount)
+	{
+		this.callInCount = callInCount;
+	}
+
+	public Map<String, Set<Long>> getContactCallTimeMap()
+	{
+		return contactCallTimeMap;
+	}
+
+	public Map<String, Double> getContactPeriodicMap()
+	{
+		return contactPeriodicMap;
+	}
+
+	public int getPeriodicContactCount()
+	{
+		return periodicContactCount;
+	}
+
+	public Map<String, Double> getContactFrequencyMap() {
+		return contactFrequencyMap;
+	}
+
+
+	/**
+	 * @param callTimeStr
+	 *            格式为yyyy-MM-dd HH:mm:ss
+	 * @return
+	 */
+	private static String getCallTimeMonth(String callTimeStr)
+	{
+
+		String[] split = callTimeStr.split("-", 3);
+		if (split.length > 1)
+		{
+
+			return split[1];
+		}
+		return "";
+	}
+
+	private static boolean isFirstTierCity(String addr)
+	{
+		return addr != null
+				&& (addr.contains("北京") || addr.contains("上海") || addr.contains("广州") || addr.contains("深圳"));
+	}
+
+	private void calculatePeriodicContact()
+	{
+		for (Map.Entry<String, Set<Long>> contactCallTime : contactCallTimeMap.entrySet())
+		{
+			Set<Long> callTimeSet = contactCallTime.getValue();
+			Long[] callTimes = new Long[callTimeSet.size()];
+			callTimeSet.toArray(callTimes);
+			Long[] intervals = new Long[callTimes.length - 1];
+			int index = 0;
+			Long sum = 0L;
+			for (int i = 0; i < callTimes.length - 1; i++)
+			{
+				intervals[index] = callTimes[i + 1] - callTimes[i];
+				sum += intervals[index];
+				index++;
+			}
+			if (intervals.length > 1)
+			{
+				double avg = (double) (sum / intervals.length);
+				double standardDevition = MathUtil.getStandardDevition(intervals, avg);
+				double periodic = avg / standardDevition;
+				contactPeriodicMap.put(contactCallTime.getKey(), periodic);
+                if (PeriodicContactEnum.isPeriodicContact(periodic))
+                {
+                    periodicContactCount++;
+                }
+			}
+		}
+	}
+	private void calculateActive()
+	{
+		for (Map.Entry<String, List<CallDetails>> callDetailsEn : contactMap.entrySet())
+		{
+            String contact = callDetailsEn.getKey();
+            if (StringUtils.isBlank(contact))
+            {
+                continue;
+            }
+            Double aDouble = contactPeriodicMap.get(contact);
+            if (aDouble == null)
+            {
+                continue;
+            }
+            List<CallDetails> callDetailsList = callDetailsEn.getValue();
+            int totalDuration = 0;
+            for (CallDetails details : callDetailsList)
+            {
+                totalDuration += details.getDuration();
+            }
+            double active = aDouble * (double) totalDuration;
+			contactFrequencyMap.put(contact, active);
+		}
+	}
+}

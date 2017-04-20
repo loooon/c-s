@@ -1,0 +1,51 @@
+<%@page language="java" pageEncoding="UTF-8" %>
+<%@page import="com.sjw.admin.web.Constants,com.sjw.admin.web.UserContext" %>
+<%
+  UserContext userContext = (UserContext)session.getAttribute(Constants.MEMBER_SESSION_KEY);
+%>
+<nav class="navbar-default navbar-static-side" role="navigation">
+  <div class="sidebar-collapse">
+    <ul class="nav" id="side-menu">
+      <li class="nav-header">
+
+        <div class="dropdown profile-element">
+          <span>
+            <img alt="image" class="img-circle" src="/resources/Hplus/img/profile_small.jpg" />
+          </span>
+          <a data-toggle="dropdown" class="dropdown-toggle" href="index.html#">
+            <span class="clear">
+              <span class="block m-t-xs"> <strong class="font-bold"><%=userContext.getAccount()%></strong></span>
+              <span class="text-muted text-xs block"> <%=userContext.getAccountName()%> <b class="caret"></b></span>
+            </span>
+          </a>
+          <ul class="dropdown-menu animated fadeInRight m-t-xs">
+            <li><a href="/home/exit.htm">安全退出</a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      <li>
+        <a href="#"><i class="fa fa-shopping-cart"></i> <span class="nav-label">商品管理</span> <span class="fa arrow"></span></a>
+        <ul class="nav nav-second-level">
+          <li><a menuTarget="commodityToList" href="/commodity/toList.htm">商品列表</a></li>
+          <li><a menuTarget="commodityToSave" href="/commodity/toSave.htm">商品添加</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#"><i class="fa fa-user"></i> <span class="nav-label">会员管理</span><span class="fa arrow"></span></a>
+        <ul class="nav nav-second-level">
+          <li><a menuTarget="memberToList" href="/member/toList.htm">会员列表</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#"><i class="fa fa-bar-chart-o"></i> <span class="nav-label">统计管理</span><span class="fa arrow"></span></a>
+        <ul class="nav nav-second-level">
+          <li><a menuTarget="statisticToDetail" href="/statistic/toDetail.htm">统计信息</a></li>
+        </ul>
+      </li>
+    </ul>
+
+  </div>
+</nav>
+<script type="text/javascript">
+</script>

@@ -1,0 +1,55 @@
+package utn.uzj.mail;
+
+import utn.util.mail.IMailScheduler;
+import utn.util.mail.MailAgent;
+import utn.util.mail.MailSchedulerImpl;
+import utn.util.mail.SmtpAgent;
+import utn.uzj.config.MailCfg;
+
+public class MailSchedulerFactory
+{
+    public static synchronized IMailScheduler getMailScheduler()
+    {
+        return MyMailScheduler.getInstance();
+    }
+
+    /*v1.2.0 xuji 2013-07-18 解决邮件不稳定问题 -{{
+    public static IMailScheduler getSMTPMailScheduler()
+    {
+        MailSchedulerImpl scheduler = MailSchedulerImpl.getInstance();
+        scheduler.setMailAgent(new SmtpAgent(MailCfg.getInstance().mailHost, MailCfg.getInstance().mailFrom, MailCfg
+                .getInstance().mailSenderPassword, MailCfg.getInstance().mailName));
+        return scheduler;
+    }
+    }}
+    */
+
+    private static class MyMailScheduler extends MailSchedulerImpl
+    {
+        private static IMailScheduler instance = null;
+
+        public static IMailScheduler getInstance()
+        {
+            if (null == instance)
+            {
+                instance = new MyMailScheduler();
+            }
+
+            return instance;
+        }
+
+        private MyMailScheduler()
+        {
+
+        }
+
+        @Override
+        public MailAgent getMailAgent()
+        {
+            return new SmtpAgent(MailCfg.getInstance().mailHost, MailCfg.getInstance().mailSender,
+                    MailCfg.getInstance().mailSenderPassword, MailCfg.getInstance().mailFrom,
+                    MailCfg.getInstance().mailName);
+        }
+
+    }
+}

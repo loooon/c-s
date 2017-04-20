@@ -1,0 +1,22 @@
+package com.credit.repository;
+
+import com.credit.base.JpaBaseRepository;
+import com.credit.entity.DunNumberDist;
+import org.springframework.data.jpa.repository.Query;
+
+import java.util.List;
+
+/**
+ * Created by Michael Chan on 3/24/2017.
+ */
+public interface DunNumberDistRepository extends JpaBaseRepository<DunNumberDist,Integer>
+{
+    List<DunNumberDist> findAllByUserPhone(String userPhone);
+
+    @Query(value = "SELECT userPhone FROM DunNumberDist")
+    List<String> findAllUserPhones();
+
+    List<DunNumberDist> findAllByIdIn(List<Integer> ids);
+
+    List<DunNumberDist> findAllByCallFromProvinceInAndUserPhoneProvinceIn(List<String> fromProvinces, List<String> toProvinces);
+}

@@ -1,0 +1,66 @@
+package com.credit.web.controller.open.blackbox;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.common.result.ResultJson;
+import com.credit.common.util.CollectionUtil;
+import com.credit.entity.NumberTag;
+import com.credit.service.cache.NumberTagCache;
+import com.credit.web.controller.AbstractBaseController;
+import com.credit.web.model.DunNumberMarkModel;
+
+/**
+ * Created by wangjunling on 2017/3/15.
+ */
+@Controller
+public class DunNumberMarkController extends AbstractBaseController
+{
+
+    @RequestMapping(value = "/service", method = RequestMethod.GET, params = "t=dun_number_mark")
+    @ResponseBody
+    public ResultJson result(@RequestParam(required = false, name = "number") String numbers)
+    {
+        if (StringUtils.isBlank(numbers))
+        {
+            return new ResultJson().paramError("号码为空");
+        }
+        String[] strings = numbers.split(",");
+        List<DunNumberMarkModel> numberMarkList = new ArrayList<>(strings.length);
+        for (String number : strings)
+        {
+            try
+            {
+                DunNumberMarkModel mark = new DunNumberMarkModel();
+                NumberTag numberTag = NumberTagCache.getInstance().getNumberTagCacheData(number);
+                if (numberTag == null)
+                {
+                    continue;
+                }
+                mark.setDemandType(numberTag.getDemandName());
+                mark.setOrgType(numberTag.getOrgName());
+                mark.setOrgCode(numberTag.getOrgCode());
+                mark.setNumber(number);
+                mark.setLastMarkDate(numberTag.getMaxDate());
+                numberMarkList.add(mark);
+            }
+            catch (ServiceException e)
+            {
+                logger.error("从缓存中获取NumberTag错误", e);
+            }
+        }
+        if (CollectionUtil.isEmpty(numberMarkList))
+        {
+            return new ResultJson().noData();
+        }
+        return new ResultJson().success(numberMarkList);
+    }
+}

@@ -1,0 +1,37 @@
+package com.credit.service;
+
+import com.credit.entity.User;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import javax.annotation.Resource;
+
+/**
+ * Created by wangjunling on 2017/3/7.
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:spring/spring-*.xml")
+public class UserServiceTest
+{
+	@Resource
+	private UserService userService;
+
+	@Test
+	public void testSave()
+	{
+		User user = new User();
+		user.setId(1);
+		user.setName("abc");
+		User user1 = userService.save(user);
+		System.out.println(user1);
+	}
+	@Test
+	public void testSearch()
+	{
+
+		User u = userService.search(1);
+		System.out.println(u);
+	}
+}

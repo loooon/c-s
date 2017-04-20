@@ -1,0 +1,41 @@
+$(document).ready(function () {
+    var options = {
+        useEasing : true,
+        useGrouping : true,
+        separator : ',',
+        decimal : '.',
+        prefix : '',
+        suffix : ''
+    };
+    var countUp  = new CountUp("dunCount", 0, 1000000, 0, 0.5, options);
+    countUp.start();
+    updateCount();
+    setInterval(updateCount,5000);
+
+});
+function updateCount() {
+
+    $.ajax({
+        url: "/dun/count",
+        method: "POST",
+        dataType: "json",
+        success: function (data) {
+            if (data.result == 200) {
+                var count = data.data;
+                var options = {
+                    useEasing : true,
+                    useGrouping : true,
+                    separator : ',',
+                    decimal : '.',
+                    prefix : '',
+                    suffix : ''
+                };
+                var oldCount = $("#dunCount").text();
+                oldCount = oldCount.replace(new RegExp(",", 'g'),'');
+                var countUp  = new CountUp("dunCount", parseInt(oldCount), count, 0, 0.5, options);
+                countUp.start();
+                // $("#dunCount").text(count);
+            }
+        }
+    })
+}

@@ -1,0 +1,416 @@
+package com.credit.web.util;
+
+import java.util.*;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.common.util.Validator;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.config.OrgTypeCfg;
+import com.credit.dto.GrayscaleVariateDto;
+import com.credit.entity.CallDetails;
+import com.credit.entity.NumberTag;
+import com.credit.enumeration.CallModelEnum;
+import com.credit.enumeration.GrayscaleDunEnum;
+import com.credit.enumeration.GrayscaleTimeEnum;
+import com.credit.service.cache.NumberTagCache;
+
+/**
+ * Created by wangjunling on 2017/4/13.
+ */
+public class GrayscaleStatUtil
+{
+    private static Logger logger = LoggerFactory.getLogger(GrayscaleStatUtil.class);
+
+    private static final List<Integer> internetFinanceIds = OrgTypeCfg.getInternetFinanceIds();
+
+    public static Date getApplyDate(List<CallDetails> callDetailsList)
+    {
+        Date applyDate = null;
+        for (CallDetails details : callDetailsList)
+        {
+            Date callTimeDate = TimeUtil.parse(details.getCallTime(), TimeUtil.FORMAT_NORMAL);
+            if (callTimeDate != null)
+            {
+                if (applyDate == null || applyDate.getTime() < callTimeDate.getTime())
+                {
+                    applyDate = callTimeDate;
+                }
+            }
+        }
+        return applyDate;
+    }
+
+    public static Map<String, Integer> resolver(List<CallDetails> callDetailsList, List<GrayscaleVariateDto> dtoList)
+    {
+        Map<String, Integer> result = new HashMap<>();
+        if (CollectionUtils.isEmpty(dtoList))
+        {
+            return result;
+        }
+        Map<String, Map<String, Integer>> callNumDurationMap = new HashMap<>();
+        Map<String, Set<String>> dayCountMap = new HashMap<>();
+        Integer totalDuration = 0;
+        Integer totalInDuration = 0;
+        Integer dunOrgTotalInDuration = 0;
+        Set<String> orgCodeSet = new HashSet<>();
+        for (CallDetails details : callDetailsList)
+        {
+            NumberTag numberTag = null;
+            try
+            {
+                numberTag = NumberTagCache.getInstance().getNumberTagCacheData(details.getContact());
+            }
+            catch (ServiceException e)
+            {
+                logger.error("从缓存中获取号码标签异常", e);
+            }
+            if (numberTag == null)
+            {
+                continue;
+            }
+            Date callTime = TimeUtil.parse(details.getCallTime(), TimeUtil.FORMAT_NORMAL);
+            for (GrayscaleVariateDto dto : dtoList)
+            {
+                if (!checkDun(numberTag, dto.getDun(), details.getContact()))
+                {
+                    continue;
+                }
+                orgCodeSet.add(numberTag.getOrgCode());
+                if (!checkDateTime(callTime, dto.getLastDate(), dto.getTimeTag()))
+                {
+                    continue;
+                }
+                Set<Object> resultSet = dto.getResultSet();
+                switch (dto.getVariateName())
+                {
+                case "TNumsCon_bank":
+                    tNumsConBank(numberTag, resultSet);
+                    break;
+                case "TNumsCon_cf":
+                    tNumsConCf(numberTag, resultSet);
+                    break;
+                case "TNumsCon_f":
+                    tNumsConF(numberTag, resultSet);
+                    break;
+                case "TNumsCon_if":
+                    tNumsConIf(numberTag, resultSet);
+                    break;
+                case "TNumsCon":
+                    tNumsCon(numberTag, resultSet);
+                    break;
+                case "TNumsCon_org":
+                    tNumsConOrg(numberTag, resultSet);
+                    break;
+                case "TTimesOut":
+                    tTimesOut(details, resultSet);
+                    break;
+                case "TTimesIn":
+                    tTimesIn(details, resultSet);
+                    break;
+                case "TNumsCon_orgtype":
+                    tNumsConOrgtype(numberTag, resultSet);
+                    break;
+                case "TNumsIn":
+                    tNumsIn(details, resultSet);
+                    break;
+                case "MaxTimesCon":
+                    maxTimesCon(details, callNumDurationMap);
+                    break;
+                case "TDaysCon":
+                    tDaysCon(details, resultSet);
+                    break;
+                case "MaxDaysIn":
+                    maxDaysIn(details, dayCountMap);
+                    break;
+                case "TTimesIn_nonbank":
+                    tTimesInNonbank(numberTag, details, resultSet);
+                    break;
+                case "TDurCon":
+                    totalDuration = tDurCon(details, totalDuration);
+                    break;
+                case "TTimesCon":
+                    tTimesCon(details, resultSet);
+                    break;
+                case "TDurIn":
+                    totalInDuration = tDurIn(details, totalInDuration);
+                    break;
+                case "TDurIn_cf":
+                    dunOrgTotalInDuration = tDurInCf(numberTag, details, dunOrgTotalInDuration);
+                    break;
+                case "AddTNumsIn_org":
+                    addTNumsInOrg(numberTag, resultSet);
+                }
+            }
+        }
+        buildResultMap(result, dtoList, callNumDurationMap, dayCountMap, totalDuration, totalInDuration,
+                dunOrgTotalInDuration, orgCodeSet);
+        return result;
+    }
+
+    private static boolean checkDun(NumberTag numberTag, String dun, String number)
+    {
+        if (GrayscaleDunEnum.DUN_NUMBER.getName().equals(dun))
+        {
+            return numberTag != null && numberTag.isDun();
+        }
+        else
+            if (GrayscaleDunEnum.DUN_PHONE_NUMBER.getName().equals(dun))
+            {
+                return numberTag != null && numberTag.isDun() && Validator.isMobile(number);
+            }
+            else
+                if (GrayscaleDunEnum.CALL_DETAILS_NUMBER.getName().equals(dun))
+                {
+                    return true;
+                }
+        return false;
+    }
+
+    private static boolean checkDateTime(Date callTime, Date lastDate, String timeTag)
+    {
+        return checkCallTime(callTime) && checkDate(callTime, lastDate) && checkTime(callTime, timeTag);
+    }
+
+    private static boolean checkCallTime(Date callTime)
+    {
+        return callTime != null;
+    }
+
+    private static boolean checkDate(Date callTime, Date lastDate)
+    {
+        return lastDate == null || (callTime != null && callTime.getTime() > lastDate.getTime());
+    }
+
+    private static boolean checkTime(Date callTime, String time)
+    {
+        if (StringUtils.equals(time, GrayscaleTimeEnum.EVENING.getName()))
+        {
+            return TimeUtil.isEvening(callTime);
+        }
+        else
+            if (StringUtils.equals(time, GrayscaleTimeEnum.WHOLE_DAY.getName()))
+            {
+                return true;
+            }
+        return false;
+    }
+
+    private static void tNumsConBank(NumberTag numberTag, Set<Object> resultSet)
+    {
+        if (numberTag.getOrgTypeId() == 50)// 银行
+        {
+            resultSet.add(numberTag.getOrgCode());
+        }
+    }
+
+    private static void tNumsConCf(NumberTag numberTag, Set<Object> resultSet)
+    {
+        if (numberTag.getOrgTypeId() == 52)// 消费金融
+        {
+            resultSet.add(numberTag.getOrgCode());
+        }
+    }
+
+    private static void tNumsConF(NumberTag numberTag, Set<Object> resultSet)
+    {
+        if (numberTag.getOrgTypeId() == 34)// 催收
+        {
+            resultSet.add(numberTag.getOrgCode());
+        }
+    }
+
+    private static void tNumsConIf(NumberTag numberTag, Set<Object> resultSet)
+    {
+        if (internetFinanceIds.contains(numberTag.getOrgTypeId()))// 互联网金融
+        {
+            resultSet.add(numberTag.getOrgCode());
+        }
+    }
+
+    private static void tNumsCon(NumberTag numberTag, Set<Object> resultSet)
+    {
+        resultSet.add(numberTag.getNumber());
+    }
+
+    private static void tNumsConOrg(NumberTag numberTag, Set<Object> resultSet)
+    {
+        resultSet.add(numberTag.getOrgCode());
+    }
+
+    private static void tTimesOut(CallDetails details, Set<Object> resultSet)
+    {
+        if (CallModelEnum.CALL_OUT.getComment().equals(details.getFormatCallModel()))
+        {
+            resultSet.add(details);
+        }
+    }
+
+    private static void tTimesIn(CallDetails details, Set<Object> resultSet)
+    {
+        if (CallModelEnum.CALL_IN.getComment().equals(details.getFormatCallModel()))
+        {
+            resultSet.add(details);
+        }
+    }
+
+    private static void tNumsConOrgtype(NumberTag numberTag, Set<Object> resultSet)
+    {
+        resultSet.add(numberTag.getOrgTypeId());
+    }
+
+    private static void tNumsIn(CallDetails details, Set<Object> resultSet)
+    {
+        if (CallModelEnum.CALL_IN.getComment().equals(details.getFormatCallModel()))
+        {
+            resultSet.add(details.getContact());
+        }
+    }
+
+    private static void maxTimesCon(CallDetails details, Map<String, Map<String, Integer>> callNumDurationMap)
+    {
+        if (callNumDurationMap.containsKey(details.getContact()))
+        {
+            Map<String, Integer> stringIntegerMap = callNumDurationMap.get(details.getContact());
+            Integer count = stringIntegerMap.get("count");
+            Integer duration = stringIntegerMap.get("duration");
+            stringIntegerMap.put("count", count + 1);
+            stringIntegerMap.put("duration", duration + details.getDuration());
+            callNumDurationMap.put(details.getContact(), stringIntegerMap);
+        }
+        else
+        {
+            Map<String, Integer> stringIntegerMap = new HashMap<>();
+            stringIntegerMap.put("count", 1);
+            stringIntegerMap.put("duration", details.getDuration());
+            callNumDurationMap.put(details.getContact(), stringIntegerMap);
+        }
+    }
+
+    private static void tDaysCon(CallDetails details, Set<Object> resultSet)
+    {
+        Date compare = TimeUtil.parse(details.getCallTime(), TimeUtil.FORMAT_NORMAL);
+        String format = TimeUtil.format(compare, TimeUtil.FORMAT_DATE_ONLY);
+        resultSet.add(format);
+    }
+
+    private static void maxDaysIn(CallDetails details, Map<String, Set<String>> dayCountMap)
+    {
+        Date compare = TimeUtil.parse(details.getCallTime(), TimeUtil.FORMAT_NORMAL);
+        String format = TimeUtil.format(compare, TimeUtil.FORMAT_DATE_ONLY);
+        Set<String> daySet = dayCountMap.get(details.getContact());
+        if (daySet == null)
+        {
+            daySet = new HashSet<>();
+        }
+        daySet.add(format);
+        dayCountMap.put(details.getContact(), daySet);
+    }
+
+    private static void tTimesInNonbank(NumberTag numberTag, CallDetails details, Set<Object> resultSet)
+    {
+        if (numberTag.getOrgTypeId() != 50 && CallModelEnum.CALL_IN.getComment().equals(details.getFormatCallModel()))// 银行
+        {
+            resultSet.add(details);
+        }
+    }
+
+    private static Integer tDurCon(CallDetails details, Integer totalDuration)
+    {
+        return totalDuration + details.getDuration();
+    }
+
+    private static void tTimesCon(CallDetails details, Set<Object> resultSet)
+    {
+        resultSet.add(details);
+    }
+
+    private static Integer tDurIn(CallDetails details, Integer totalInDuration)
+    {
+        if (CallModelEnum.CALL_IN.getComment().equals(details.getFormatCallModel()))
+        {
+            totalInDuration += details.getDuration();
+        }
+        return totalInDuration;
+    }
+
+    private static Integer tDurInCf(NumberTag numberTag, CallDetails details, Integer dunTotalInDuration)
+    {
+        if (numberTag.getOrgTypeId() == 34 && CallModelEnum.CALL_IN.getComment().equals(details.getFormatCallModel()))// 催收
+        {
+            dunTotalInDuration += details.getDuration();
+        }
+        return dunTotalInDuration;
+    }
+
+    private static void addTNumsInOrg(NumberTag numberTag, Set<Object> resultSet)
+    {
+        resultSet.add(numberTag.getOrgCode());
+    }
+
+    private static void buildResultMap(Map<String, Integer> resultMap, List<GrayscaleVariateDto> dtoList,
+            Map<String, Map<String, Integer>> callNumDurationMap, Map<String, Set<String>> dayCountMap,
+            Integer totalDuration, Integer totalInDuration, Integer dunOrgTotalInDuration, Set<String> orgCodeSet)
+    {
+        for (GrayscaleVariateDto variateDto : dtoList)
+        {
+            String varName = String.format("%s%s%s_%s", variateDto.getLastDateTag(), variateDto.getTimeTag(),
+                    variateDto.getDun(), variateDto.getVariateName());
+            switch (variateDto.getVariateName())
+            {
+            case "MaxTimesCon":
+                Integer maxCount = 0;
+                Integer maxDuration = 0;
+                for (Map.Entry<String, Map<String, Integer>> stringMapEntry : callNumDurationMap.entrySet())
+                {
+                    Integer count = stringMapEntry.getValue().get("count");
+                    Integer duration = stringMapEntry.getValue().get("duration");
+                    if (maxCount < count)
+                    {
+                        maxCount = count;
+                        maxDuration = duration;
+                    }
+                }
+                resultMap.put(varName, maxDuration);
+                break;
+            case "MaxDaysIn":
+                Integer maxDayCount = 0;
+                for (Map.Entry<String, Set<String>> stringSetEntry : dayCountMap.entrySet())
+                {
+                    if (stringSetEntry.getValue().size() > maxDayCount)
+                    {
+                        maxDayCount = stringSetEntry.getValue().size();
+                    }
+                }
+                resultMap.put(varName, maxDayCount);
+                break;
+            case "TDurCon":
+                resultMap.put(varName, totalDuration);
+                break;
+            case "TDurIn":
+                resultMap.put(varName, totalInDuration);
+                break;
+            case "TDurIn_cf":
+                resultMap.put(varName, dunOrgTotalInDuration);
+                break;
+            case "AddTNumsIn_org":
+                int orgCount = orgCodeSet.size();
+                int lOrgCount = variateDto.getResultSet().size();
+                int vOrgCount = 0;
+                if (orgCount > 0)
+                {
+                    vOrgCount = lOrgCount - (orgCount - lOrgCount);
+                }
+                resultMap.put(varName, vOrgCount);
+                break;
+            default:
+                resultMap.put(varName, variateDto.getResultSet().size());
+                break;
+            }
+        }
+    }
+}

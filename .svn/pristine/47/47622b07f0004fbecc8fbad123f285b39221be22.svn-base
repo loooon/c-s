@@ -1,0 +1,181 @@
+package com.credit.common.web.servlet.filter;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.servlet.*;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+
+import com.alibaba.fastjson.JSON;
+import com.credit.common.result.ResultJson;
+import com.credit.common.util.servlet.RequestUtil;
+import com.credit.common.web.servlet.Constant;
+import com.credit.common.web.session.UserSession;
+import com.credit.common.web.session.UserSessionFactory;
+
+/**
+ * 过滤没有登录用户访问my文件夹下的文件 未重定向的原始请求URL：request.getHeader("X-Forwarded-Uri")
+ * 
+ * @author Administrator
+ */
+public class LoginFilter implements Filter
+{
+    protected FilterConfig config;
+    protected Set<String> entryPoints = new HashSet<String>();
+    
+    public void init(FilterConfig config) throws ServletException
+    {
+        this.config = config;
+        
+        entryPoints.add("header.jsp");
+        entryPoints.add("top.jsp");
+        entryPoints.add("footer.jsp");
+        
+        processIngoreUrl();
+    }
+    
+    private void processIngoreUrl()
+    {
+        String entryPointsStr = this.config.getInitParameter(Constant.FILTER_ENTRYPOINTS_PARAM_NAME);
+        String values[] = entryPointsStr.split(Constant.FILTER_ENTRYPOINTS_PARAM_SEPERATOR);
+        for (String value : values)
+        {
+            this.entryPoints.add(value.trim());
+        }
+    }
+
+    public void destroy()
+    {
+        this.entryPoints.clear();
+        this.config = null;
+    }
+
+    
+
+    public void doFilter(ServletRequest arg0, ServletResponse arg1, FilterChain arg2) throws IOException, ServletException
+    {
+        HttpServletRequest request     = (HttpServletRequest)arg0;
+        HttpServletResponse response    = (HttpServletResponse)arg1;
+        
+        if(isIngored(request))
+        {
+            arg2.doFilter(arg0, arg1);
+            return;
+        }
+        
+        if (!isLogined(request))
+        {
+        
+            // 设置用户昵称的cookie
+            String domain = RequestUtil.getCookieDomain(request);
+            String path   = RequestUtil.getCookiePath(request);
+            response.addCookie(createNickCookie(domain, path, 0));
+            String requestType = request.getHeader("X-Requested-With");
+            if (requestType == null)
+            {
+                response.sendRedirect(getRedirectLoginUrl(request));
+            }
+            ResultJson resultJson = new ResultJson();
+            resultJson.setStatusCode(ResultJson.STATUS_CODE_SESSION_INVALID);
+            resultJson.setStatusMessage("未登录");
+            response.setContentType("text/html;charset=UTF-8");
+            response.getWriter().print(JSON.toJSON(resultJson));
+        }
+        else
+        {
+            arg2.doFilter(arg0, arg1);
+        }
+    }
+
+    protected Cookie createNickCookie(String domain, String path, int maxAge)
+    {
+        Cookie cookie = new Cookie("nick", "");
+        cookie.setDomain(domain);
+        cookie.setPath(path);
+        cookie.setMaxAge(maxAge);
+        return cookie;
+    }
+    
+    protected String getRedirectLoginUrl(HttpServletRequest request)
+    {
+        //从HTTP头中获取访问此页面的外网地址（"X-Forwarded-Uri"是nginx前端代理服务器设置的自定义HTTP头）
+        String requestUri = request.getHeader("X-Forwarded-Uri");
+        //int serverPort = request.getServerPort();
+
+        //如果不存在nginx前端代理，则直接使用当前访问的URI作为待跳转的地址
+        if (null == requestUri)
+        {
+            //带request参数
+            requestUri = request.getRequestURI().replace(request.getContextPath(), "");
+            if (request.getQueryString() != null)
+            {
+                requestUri += "?" + request.getQueryString();
+            }
+        }
+
+        //构造需要登录后自动跳转的URL
+        //FIXME .... 
+        //TODO ....
+//        String toUrl = request.getScheme() + "://" + SysConfig.getInstance().domain  + requestUri;
+
+        //构造过渡页面的URL并发送
+//        return request.getContextPath() + "/user/toLogin?toUrl=" + toUrl;
+        return request.getContextPath() + "/user/toLogin";
+    }
+    
+    protected boolean isIngored(HttpServletRequest request)
+    {
+        boolean skipCheck = false;
+        String path = request.getServletPath();
+        if (request.getPathInfo() != null) 
+		{
+            path = path + request.getPathInfo();
+        }
+        
+        for(String entr : entryPoints)
+        {
+            if(entr.equalsIgnoreCase(path))
+            {
+                skipCheck = true;
+                break;
+            }
+            if(entr.indexOf("*")  > 0)
+			{
+                entr = entr.replace("*","");
+                if(path.startsWith(entr))
+				{
+                    skipCheck = true;
+                    break;
+                }
+            }
+            
+        }
+        
+        return skipCheck;
+    }
+    
+    protected boolean isLogined(HttpServletRequest request)
+    {
+        UserSession userSession = null;
+        
+        //先从缓存中取
+        try
+        {
+            userSession = UserSessionFactory.getUserSession(request.getSession());
+        }
+        catch(Exception e)
+        {
+        }
+        
+        if (null == userSession || userSession.getUserId() == 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+}

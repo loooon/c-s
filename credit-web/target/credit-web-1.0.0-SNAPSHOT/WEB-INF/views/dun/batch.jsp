@@ -1,0 +1,56 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<meta name="keywords" content="">
+	<meta name="author" content="">
+	<meta name="theme-color" content="#ffffff">
+	<title>批量查验催收号码-催收黄页</title>
+</head>
+<body>
+<div class="header02"></div>
+<div class="number">
+    <p>凭安已发现催收号码<span id="dunCount">0</span>个&nbsp;&nbsp;覆盖逾期用户<span id="coverageCount">0</span>个</p>
+</div>
+<div class="layout index-main">
+	<div class="file">
+		<form id="query_batch_Form" action= "/dun/query/batch" method= "post" enctype ="multipart/form-data">
+		<span class="file-input">
+				<%--<input  id="file_id" name="file" type="file" style="" value="" class="file-in1">--%>
+				<%--<label for="upload_file">上传文件</label>--%>
+                    	<div class="from-file search-file" style="width: 290px;">
+									<input type="file" id="file_id" name="file" value="选择上传文件">
+									<b style="text-overflow: ellipsis;overflow: hidden;white-space: nowrap; width: 200px;" id="fileTxt">选择上传文件</b>
+								</div>
+				<input id="upload_file"type="button" style="cursor: pointer;" value="" class="file-in2">
+			</span>
+		</form>
+		<p class="apply-p" id="error_message_p" ><em><img src="/resources/img/dun/infor.png" ><span id="error_message" style="">上传号码文件（支持文件格式txt、csv）</span></em></p>
+    </div>
+
+</div>
+<div class="result" id="resultSizeP" style="display: none">
+    <div class="layout result-number">
+        <h3>从文件中找到<span id="findNumberCount">0</span>个号码，其中<span id="resultSize">0</span>个号码已被标记</h3>
+    </div>
+</div>
+<div class="layout result-over" id="batch_data_div" style="display: none">
+
+<%--    <div class="result-block01" style="display: none" model>
+        <div class="res-left01">{0}
+        </div>
+        <div class="res-right01"><h4>{1}</h4>
+            <h5>电话号码：{2}</h5></div>
+    </div>--%>
+
+</div>
+
+<script type="text/javascript" src="/resources/js/dun/batch.js"></script>
+<script type="text/javascript" src="/resources/js/lib/countUp.js"></script>
+<script type="text/javascript" src="/resources/js/dun/dunCount.js"></script>
+</body>
+</html>

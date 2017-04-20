@@ -1,0 +1,37 @@
+package com.credit.common.cfg.store;
+
+
+import com.credit.common.util.pki.SecureUtil;
+
+public class DefaultConfigStore extends IniFileConfigStore
+{
+
+    /**
+     * 加密配置参数使用的KEY 
+     */
+    private static byte[] KEY = {0x39, 0x7a, -0x28, 0x6e, -0x1d, 0x24, 0x6f, -0x3b,
+                                 0x32, 0x45, 0x7c, -0x33, 0x2a, 0x47, 0x0c, 0x18}; 
+    
+    
+    public DefaultConfigStore(String path)
+    {
+        super(path);
+    }
+    /**
+     * (non-Javadoc)
+     * @see HC.cfg.store.IniFileConfigStore#decryptString(java.lang.String)
+     */
+    protected String decryptString(String val) throws Exception
+    {
+        return SecureUtil.tryDec3DES(val, KEY);
+    }
+
+    /**
+     * (non-Javadoc)
+     * @see HC.cfg.store.IniFileConfigStore#encryptString(java.lang.String)
+     */
+    protected String encryptString(String val) throws Exception
+    {
+        return SecureUtil.enc3DES(val, KEY);
+    }
+}

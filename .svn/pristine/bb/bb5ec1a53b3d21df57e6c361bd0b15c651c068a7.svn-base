@@ -1,0 +1,49 @@
+alter table tb_user_call_details_history modify column contact_checks LONGTEXT;
+ALTER TABLE tb_user ADD product_name varchar(255), ADD expire_date datetime;
+
+DROP TABLE IF EXISTS tb_site_resource;
+CREATE TABLE tb_site_resource
+(
+    resource_id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    resource_path VARCHAR(500),
+    resource_name VARCHAR(500) NOT NULL,
+    parent_id INT(11),
+    resource_type INT(11) COMMENT '0：普通
+1：接口',
+    update_time DATETIME,
+    create_time DATETIME
+)ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT '查询服务';
+CREATE UNIQUE INDEX tb_resource_resource_id_uindex ON tb_site_resource (resource_id);
+INSERT INTO tb_site_resource VALUES ('1', '/service?t=call_detail_number_mark', '详单号码标记', null, '1', '2017-04-01 16:37:17', '2017-04-01 16:37:19');
+INSERT INTO tb_site_resource VALUES ('2', '/service?t=call_detail_number_mark', '详单号码标记导出pdf', null, '1', '2017-04-01 16:37:17', '2017-04-01 16:37:19');
+INSERT INTO tb_site_resource VALUES ('3', '/service?t=dun_number_mark', '催收号码标记', null, '1', '2017-04-01 16:37:17', '2017-04-01 16:37:19');
+INSERT INTO tb_site_resource VALUES ('4', '/service?t=grayscale_stat', '染黑度统计', null, '1', '2017-04-01 16:37:17', '2017-04-01 16:37:19');
+INSERT INTO tb_site_resource VALUES ('5', '/service?t=structured_result', '获取结构化结果数据', null, '1', '2017-04-10 13:18:38', '2017-04-10 13:18:38');
+INSERT INTO tb_site_resource VALUES ('6', '/service?t=upload_text', '上传文本', null, '1', '2017-04-10 13:18:52', '2017-04-10 13:18:52');
+DROP TABLE IF EXISTS tb_user_permission;
+CREATE TABLE tb_user_permission
+(
+    permission_id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    user_id INT(11) NOT NULL,
+    vkey VARCHAR(225) NOT NULL,
+    resource_id INT(11) NOT NULL,
+    update_time DATETIME,
+    create_date DATETIME
+)ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT '用户拥有查询服务权限';
+
+DROP TABLE IF EXISTS tb_admin;
+CREATE TABLE tb_admin
+(
+    id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    user_name VARCHAR(255) NOT NULL,
+    password VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(255),
+    super_admin INT(11),
+    role VARCHAR(255),
+    create_time DATETIME,
+    update_time DATETIME
+)ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT '管理员表';
+
+
+ALTER TABLE tb_user ADD verify_state_code INT(11), ADD verify_state_name VARCHAR(255);

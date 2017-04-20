@@ -1,0 +1,60 @@
+package com.credit.web;
+
+
+import com.credit.common.cfg.store.DefaultConfigStore;
+import com.credit.common.cfg.store.IConfigStore;
+import com.credit.common.util.file.FileUtil;
+import com.credit.common.util.net.ip.seeker.IPSeeker;
+
+public class AppContext
+{
+    private static String appRoot = null;
+    private static IConfigStore defaultConfigStore = null;
+    
+    public  static final String DEFAULT_CFG_PATH = "WEB-INF/conf/config.ini";
+    
+    private static IPSeeker ipSeeker;
+    
+    /**
+     * 
+     * @param rootPath
+     * @throws Exception
+     */
+    public static void init(String rootPath) throws Exception
+    {
+        appRoot = rootPath;
+        defaultConfigStore = new DefaultConfigStore(getConfigPath());
+        
+        //MessagePublishScheduler.getInstance().start();
+    }
+    
+    public static void uninit() throws Exception
+    {
+        
+    }
+    
+    public static IConfigStore getDefaultConfigStore()
+    {
+        if (null == defaultConfigStore)
+        {
+            defaultConfigStore = new DefaultConfigStore(getConfigPath());
+        }
+        return defaultConfigStore;
+    }
+    
+    public static String getConfigPath()
+    {
+        return FileUtil.join(appRoot, DEFAULT_CFG_PATH);
+    }
+    
+    
+    public static String getAppRoot()
+    {
+        return appRoot;
+    }
+    
+    public static IPSeeker getIPSeeker()
+    {
+        return ipSeeker;
+    }
+}

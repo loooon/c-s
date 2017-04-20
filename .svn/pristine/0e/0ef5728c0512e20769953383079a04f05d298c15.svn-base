@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<decorators defaultdir="/WEB-INF/layouts/">
+    <!-- 此处用来定义不需要过滤的页面 -->
+    <excludes>
+        <pattern>/resources/*</pattern>
+        <pattern>/source/*</pattern>
+        <pattern>/index.jsp</pattern>
+        <pattern>*.html</pattern>
+        <pattern>/login</pattern>
+    </excludes>
+
+    <!-- detail
+    <decorator name="detail" page="detail.jsp">
+        <pattern>/detail/*</pattern>
+    </decorator>
+    -->
+    <!-- 用来定义装饰器要过滤的页面 -->
+    <decorator name="main" page="default.jsp">
+        <pattern>/*</pattern>
+    </decorator>
+
+</decorators>

@@ -1,0 +1,64 @@
+package com.credit.web.controller;
+
+import java.util.Date;
+
+import javax.annotation.Resource;
+
+import com.credit.common.context.BeanFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.credit.common.result.ResultJson;
+import com.credit.entity.User;
+import com.credit.service.UserService;
+
+/**
+ * Created by wangjunling on 2017/3/7.
+ */
+
+@Controller
+public class UserController
+{
+    @Resource
+    private UserService userService;
+
+    @Value("${host}")
+    private String host;
+
+    @RequestMapping("/user1")
+    @ResponseBody
+    public ResultJson list()
+    {
+        User search = userService.search(1);
+        return new ResultJson().success(search);
+    }
+
+    @RequestMapping("/demo")
+    public String demo()
+    {
+        return "demo";
+    }
+
+    @RequestMapping("/host")
+    @ResponseBody
+    public ResultJson host()
+    {
+        return new ResultJson().success(host);
+    }
+
+	@RequestMapping("/bean")
+	@ResponseBody
+	public ResultJson bean()
+	{
+		try {
+			UserService userService = BeanFactory.getBean("userService", UserService.class);
+			User search = userService.search(1);
+			return new ResultJson().success(search);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return new ResultJson().error();
+	}
+}

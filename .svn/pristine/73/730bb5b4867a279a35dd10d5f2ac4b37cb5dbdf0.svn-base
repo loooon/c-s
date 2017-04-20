@@ -1,0 +1,65 @@
+package com.credit.web.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+/**
+ * Created by Michael Chan on 3/8/2017.
+ */
+@Controller()
+public class IndexController
+{
+    @RequestMapping("/login")
+    public String login()
+    {
+        return "login";
+    }
+
+    @RequestMapping("/digest")
+    public String index()
+    {
+        return "user/digest/all_data";
+    }
+
+    @RequestMapping("/digest/history")
+    public String searchHistroy()
+    {
+        return "user/digest/history";
+    }
+
+    @RequestMapping("/search/personal")
+    public String searchPersonal()
+    {
+        return "user/search/personal";
+    }
+
+    @RequestMapping("/account/charge")
+    public String searchAccountChargeHistory()
+    {
+        return "user/account/charge_history";
+    }
+
+    @RequestMapping("/account/consume")
+    public String searchAccountConsumeHistory()
+    {
+        return "user/account/consume_history";
+    }
+
+    @RequestMapping("/account/password")
+    public String modifyAccountPassword()
+    {
+        return "user/account/modify_password";
+    }
+
+    @RequestMapping("/notice")
+    public String searchNotice()
+    {
+        return "user/notice";
+    }
+
+    @RequestMapping("/support")
+    public String searchSupport()
+    {
+        return "user/support";
+    }
+}

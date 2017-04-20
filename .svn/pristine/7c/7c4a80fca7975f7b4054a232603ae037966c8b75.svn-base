@@ -1,0 +1,29 @@
+package com.credit.common.cfg;
+
+/**
+ * 配置变更的回调类
+ * @author xuji
+ * @version 1.0
+ * @since 1.0
+ */
+public interface IConfigChangeListener 
+{
+    /**
+     * 配置将要变更前调用，如果有异常，变更停止，rollbackChange会被调用用于还原
+     * 如果都成功，commitChange会调用
+     * @param cfgObj
+     */
+    public void onChange(ConfigObj cfgObj) throws Exception;
+    
+    /**
+     * 在配置修改发生异常后调用，用于侦听器的回滚。
+     * @param oldCfgObj
+     */
+    public void rollbackChange(ConfigObj oldCfgObj);
+    
+    /**
+     * 提交更改
+     * @param newCfgObj
+     */
+    public void commitChange(ConfigObj newCfgObj);
+}

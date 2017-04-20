@@ -1,0 +1,99 @@
+package com.credit.web.interceptor;
+
+import java.lang.reflect.Method;
+import java.util.Date;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+
+import com.alibaba.fastjson.JSON;
+import com.credit.common.web.session.UserSession;
+import com.credit.common.web.session.UserSessionFactory;
+import com.credit.entity.AccessLog;
+import com.credit.service.AccessLogService;
+
+/**
+ * Created by Michael Chan on 3/31/2017.
+ */
+public class AccessLogInterceptor extends HandlerInterceptorAdapter
+{
+    public static final Logger logger = LoggerFactory.getLogger(AccessLogInterceptor.class);
+
+
+    @Resource
+    private AccessLogService<AccessLog> accessLogService;
+
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception
+    {
+        if (isLogin(request))
+        {
+            return;
+        }else
+        {
+//            java.io.ByteArrayOutputStream output1=  new java.io.ByteArrayOutputStream();
+
+//            DataOutputStream output = new DataOutputStream(output1);
+//            ServletOutputStream output2=response.getOutputStream();
+//            String userName = UserSessionFactory.getUserSession(request).getUserName();
+            String vKeyValues = request.getParameter("vkey");
+            String tValues = request.getParameter("t");
+            Map params = request.getParameterMap();
+            String requestUri = request.getServletPath();
+            ModelAndView m = modelAndView;
+            System.out.println(m);
+            if(handler instanceof HandlerMethod)
+            {
+                HandlerMethod method = (HandlerMethod)handler;
+
+                Method stringResult = method.getMethod();
+                System.out.println(stringResult);
+            }
+            if (modelAndView != null)
+            {
+                System.out.println(modelAndView);
+            }
+
+            if (!tValues.trim().equals(""))
+            {
+                requestUri += "?=" + tValues;
+            }
+            String responseContentType = response.getContentType();
+            AccessLog accessLog = new AccessLog();
+//            accessLog.setUserName(userName);
+            accessLog.setvKey(vKeyValues);
+            accessLog.setResourceName(requestUri);
+            accessLog.setParams(JSON.toJSONString(params));
+            accessLog.setResponseType(responseContentType);
+
+            accessLog.setResponseResult("ddd");
+            accessLog.setRequestTime(new Date());
+            accessLog.setCreateTime(new Date());
+            accessLog.setUpdateTime(new Date());
+//            accessLogService.saveAccessRecord(accessLog);
+        }
+
+        super.postHandle(request, response, handler, modelAndView);
+    }
+
+    private boolean isLogin(HttpServletRequest request) throws Exception
+    {
+        UserSession userSession = UserSessionFactory.getUserSession(request);
+        return userSession != null;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception
+    {
+        System.out.println("1");
+        super.afterCompletion(request, response, handler, ex);
+    }
+}

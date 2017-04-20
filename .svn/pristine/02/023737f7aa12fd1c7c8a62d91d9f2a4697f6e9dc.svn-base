@@ -1,0 +1,9 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<div class="footer">
+    <div class="pull-right">
+        By：<a href="#" target="_blank">撞大运</a>
+    </div>
+    <div>
+        <strong>Copyright</strong> 街多多 &copy; 2015
+    </div>
+</div>

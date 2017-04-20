@@ -1,0 +1,104 @@
+package com.credit.service.cache;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.log4j.spi.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.credit.common.cache.AbstractCache;
+import com.credit.common.cache.CacheFactory;
+import com.credit.common.context.BeanFactory;
+import com.credit.common.exception.ServiceException;
+import com.credit.entity.NumberTag;
+import com.credit.service.NumberTagService;
+import com.credit.service.impl.NumberTagServiceImpl;
+
+/**
+ * Created by Michael Chan on 3/9/2017.
+ */
+public class NumberTagCache
+{
+    private static final Logger logger = LoggerFactory.getLogger(NumberTagCache.class);
+
+    private static final String SERVICE_NAME = "numberTagService";
+
+    private NumberTagService numberTagService;
+
+    private static final String NUMBER_TAG = "number_tag";
+
+    private AbstractCache<String, List<NumberTag>> cache;
+
+    private NumberTagCache()
+    {
+        try
+        {
+            numberTagService = BeanFactory.getBean(SERVICE_NAME, NumberTagServiceImpl.class);
+        }
+        catch (Exception e)
+        {
+            numberTagService = null;
+            logger.error("初始化号码标签信息失败!", e);
+        }
+
+        try
+        {
+            cache = CacheFactory.getInstance().newCache(300, TimeUnit.MINUTES, 100000);
+        }
+        catch (Exception e)
+        {
+            cache = null;
+            logger.error("初始化号码标签信息失败!", e);
+        }
+    }
+
+    private static class NumberTagHolder
+    {
+        private static final NumberTagCache instance = new NumberTagCache();
+    }
+
+    public static NumberTagCache getInstance()
+    {
+        return NumberTagCache.NumberTagHolder.instance;
+    }
+
+    public void reloadAll() throws ServiceException
+    {
+        try
+        {
+            if (null == numberTagService)
+            {
+                logger.error("初始化号码标签信息失败!");
+                return;
+            }
+            cache.invalidAllCache();
+
+            List<NumberTag> numberTags = numberTagService.searchAll();
+            if (null != numberTags)
+            {
+                cache.cache(NUMBER_TAG, numberTags);
+            }
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "重新加载号码标签信息失败", e);
+        }
+    }
+
+    public List<NumberTag> getCacheData() throws ServiceException
+    {
+        try
+        {
+            if (cache.size() == 0)
+            {
+                reloadAll();
+            }
+            return cache.getAllCaches().get(NUMBER_TAG);
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "从缓存中加载号码标签信息失败", e);
+        }
+    }
+}

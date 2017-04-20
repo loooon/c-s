@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd">
+
+    <!--<tx:annotation-driven transaction-manager="transactionManager" />-->
+    <context:component-scan base-package="com.credit.service" />
+<!--    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>-->
+    <!--  Transaction interceptor  -->
+    <bean id="transactionInterceptor" class="com.credit.datasource.TransactionInterceptor">
+        <property name="transactionManager" ref="transactionManager" />
+        <property name="transactionAttributes">
+            <props>
+                <prop key="insert*">PROPAGATION_REQUIRED,-Exception</prop>
+                <prop key="update*">PROPAGATION_REQUIRED,-Exception</prop>
+                <prop key="edit*">PROPAGATION_REQUIRED,-Exception</prop>
+                <prop key="save*">PROPAGATION_REQUIRED,-Exception</prop>
+                <prop key="add*">PROPAGATION_REQUIRED,-Exception</prop>
+                <prop key="new*">PROPAGATION_REQUIRED,-Exception</prop>
+                <prop key="set*">PROPAGATION_REQUIRED,-Exception</prop>
+                <prop key="remove*">PROPAGATION_REQUIRED,-Exception</prop>
+                <prop key="delete*">PROPAGATION_REQUIRED,-Exception</prop>
+                <prop key="change*">PROPAGATION_REQUIRED,-Exception</prop>
+                <prop key="put*">PROPAGATION_REQUIRED,-Exception</prop>
+
+                <prop key="get*">PROPAGATION_REQUIRED,readOnly,-Exception</prop>
+                <prop key="find*">PROPAGATION_REQUIRED,readOnly,-Exception</prop>
+                <prop key="load*">PROPAGATION_REQUIRED,readOnly,-Exception</prop>
+                <prop key="search*">PROPAGATION_REQUIRED,readOnly,-Exception</prop>
+                <prop key="query*">PROPAGATION_REQUIRED,readOnly,-Exception</prop>
+                <prop key="use*">PROPAGATION_REQUIRED,readOnly,-Exception</prop>
+                <prop key="count*">PROPAGATION_REQUIRED,readOnly,-Exception</prop>
+                <prop key="list*">PROPAGATION_REQUIRED,readOnly,-Exception</prop>
+                <prop key="*">PROPAGATION_REQUIRED,readOnly,-Exception</prop>
+            </props>
+        </property>
+        <property name="prefixs">
+            <set>
+                <value>insert</value>
+                <value>update</value>
+                <value>edit</value>
+                <value>save</value>
+                <value>add</value>
+                <value>new</value>
+                <value>set</value>
+                <value>remove</value>
+                <value>delete</value>
+                <value>change</value>
+                <value>put</value>
+            </set>
+        </property>
+    </bean>
+    <!-- BeanName auto proxy to define the interceptor -->
+    <bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+        <property name="beanNames">
+            <list>
+                <value>*Service</value>
+            </list>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>transactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+</beans>

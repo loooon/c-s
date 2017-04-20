@@ -1,0 +1,41 @@
+package com.credit.enumeration;
+
+import com.credit.config.CallDetailsCfg;
+
+/**
+ * Created by wangjunling on 2017/3/17.
+ */
+public enum CallFrequencyEnum
+{
+    NO_FREQUENT("不频繁"), GENERAL("一般"), OFTEN("经常联系"), DEFAULT("未知");
+
+    private String name;
+
+    CallFrequencyEnum(String name)
+    {
+        this.name = name;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public static String getCallFrequencyName(Double fre)
+    {
+        if (fre == null)
+        {
+            return NO_FREQUENT.getName();
+        }
+        if (fre > CallDetailsCfg.getCallFrequencyHigh())
+        {
+            return OFTEN.getName();
+        }
+        if (fre < CallDetailsCfg.getCallFrequencyLow())
+        {
+            return NO_FREQUENT.getName();
+        }
+        return GENERAL.getName();
+    }
+
+}

@@ -1,0 +1,7 @@
+package com.credit.common.web.servlet;
+
+public class Constant
+{
+    public static String FILTER_ENTRYPOINTS_PARAM_NAME = "entryPoints";
+    public static String FILTER_ENTRYPOINTS_PARAM_SEPERATOR = ",";
+}

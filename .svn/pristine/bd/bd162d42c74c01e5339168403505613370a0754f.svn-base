@@ -1,0 +1,81 @@
+package com.credit.web.model;
+
+import java.util.List;
+
+/**
+ * Created by Michael Chan on 3/13/2017.
+ */
+public class TopCallOutStat
+{
+    private String contactNum;//联系人号码
+
+    private Integer callInTimes;//通话次数
+
+    private String callInDuration;//通话时长
+
+    private String totalRatio;
+
+    private String interSymbol;
+
+    private String isCyclelyContact;
+
+    public String getContactNum()
+    {
+        return contactNum;
+    }
+
+    public void setContactNum(String contactNum)
+    {
+        this.contactNum = contactNum;
+    }
+
+    public Integer getCallInTimes()
+    {
+        return callInTimes;
+    }
+
+    public void setCallInTimes(Integer callInTimes)
+    {
+        this.callInTimes = callInTimes;
+    }
+
+    public String getTotalRatio()
+    {
+        return totalRatio;
+    }
+
+    public void setTotalRatio(String totalRatio)
+    {
+        this.totalRatio = totalRatio;
+    }
+
+    public String getInterSymbol()
+    {
+        return interSymbol;
+    }
+
+    public void setInterSymbol(String interSymbol)
+    {
+        this.interSymbol = interSymbol;
+    }
+
+    public String getIsCyclelyContact()
+    {
+        return isCyclelyContact;
+    }
+
+    public void setIsCyclelyContact(String isCyclelyContact)
+    {
+        this.isCyclelyContact = isCyclelyContact;
+    }
+
+    public String getCallInDuration()
+    {
+        return callInDuration;
+    }
+
+    public void setCallInDuration(String callInDuration)
+    {
+        this.callInDuration = callInDuration;
+    }
+}

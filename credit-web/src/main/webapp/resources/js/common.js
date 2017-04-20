@@ -1,0 +1,284 @@
+function malert(context,closer,config){
+    $("input").blur();
+    var opacity=0.2,time=300,z=99;
+    if(config!=null){
+        opacity=config.opacity==null?opacity:config.opacity;
+        time=config.time==null?time:config.time;
+        z=config["z-index"]==null?z:config["z-index"];
+    }
+
+    var maskStr="<div id='malert_mask' style='position:fixed;display:none;z-index:"+z+";top:0;left:0; width:100%; height:100%;background-color:black;filter:alpha(opacity="+(opacity*100)+");-moz-opacity:"+opacity+";opacity:"+opacity+";'></div>";
+    if($("#malert_mask").length!=0){
+        $("#malert_mask").remove();
+    }
+
+    $("body").append(maskStr);
+    var mask=$("#malert_mask");
+    var h = $(window).height()-context.height();
+    if(h<0){h = 100;}
+//    context.css({"top":((h)/3)+"px","position":"fixed", "z-index":z+1,"left":"50%"});
+    //"margin-left":"-540px"
+    context.css({"top":((h)/2)+"px","position":"fixed", "z-index":z+1,"left":"50%"});
+   context.css("margin-left","-"+(context.width()/2)+"px");
+    context.fadeIn(time);mask.fadeIn(time);
+    //关闭
+    var closeFunction = function (){
+        context.fadeOut(time);
+        mask.fadeOut(time).remove();
+        if(config.onclose){config.onclose();}
+    };
+    if (config.timeout) {
+        setTimeout(closeFunction,config.timeout);
+    }
+    mask.click(closeFunction);
+    if(closer){
+        closer.click(closeFunction);
+    }
+}
+
+function closeMalert(context) {
+    // context.hide();
+    context.fadeOut(200);
+    $("#malert_mask").fadeOut(200).remove();
+}
+function isMalert() {
+    return $('#malert_mask').length && $('#malert_mask').length>0;
+}
+
+$.fn.extend({
+    animateCss: function (animationName) {
+        var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
+        this.addClass('animated ' + animationName).one(animationEnd, function() {
+            $(this).removeClass('animated ' + animationName);
+        });
+    }
+});
+
+
+
+/**
+ * 导航栏工具类
+ */
+function NavHandler(items){
+    this.items = items;
+    items = items || $("[data-nav]");
+    for (var i=0; i<items.length; i++){
+        var item = items.eq(i);
+        var re = new RegExp(item.attr("data-nav"));
+        if(re.test(window.location.href)){
+            item.siblings().removeClass('current');
+            item.addClass("current");
+            return;
+        }
+    }
+}
+NavHandler.prototype.select = function (num){
+    this.items.removeClass("current");
+    this.items.eq(num).addClass("current");
+};
+
+
+function DivHandler(content,list) {
+    if(content.length < 1){
+        return;
+    }
+    this.content = content;
+    if (this.content.find("[model]").length > 0) {
+        this.itemModel = this.content.find("[model]").clone().removeAttr("model").removeAttr("style")[0].outerHTML;
+    }
+   this.loadData(list);
+
+}
+DivHandler.prototype = {
+    "loadData" : function (list){
+        var handler = this;
+        for (var i = 0; i < list.length; i++) {
+            var itemObj = handler.formateItem(i, handler.itemModel, list[i]);
+            if (typeof itemObj == 'string') {
+                itemObj = itemObj.replace(/null|undefined|NaN/g, ' ');
+            }
+            handler.content.append(itemObj);
+        }
+    },
+    "formateItem" : function(index, model, item){return '';}
+};
+/**
+ * 格式化日期
+ * new Date().format("yyyy-MM-dd")
+ */
+Date.prototype.format = function(format) {
+    var o = {
+        "M+" : this.getMonth() + 1, // month
+        "d+" : this.getDate(), // day
+        "h+" : this.getHours(), // hour
+        "m+" : this.getMinutes(), // minute
+        "s+" : this.getSeconds(), // second
+        "q+" : Math.floor((this.getMonth() + 3) / 3), // quarter
+        "S+" : this.getMilliseconds()
+    };
+    if (/(y+)/.test(format)) {
+        format = format.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    }
+    for ( var k in o) {
+        if (new RegExp("(" + k + ")").test(format)) {
+            var formatStr = "";
+            for ( var i = 1; i <= RegExp.$1.length; i++) {
+                formatStr += "0";
+            }
+            var replaceStr = "";
+            if (RegExp.$1.length == 1) {
+                replaceStr = o[k];
+            } else {
+                formatStr = formatStr + o[k];
+                var index = ("" + o[k]).length;
+                formatStr = formatStr.substr(index);
+                replaceStr = formatStr;
+            }
+            format = format.replace(RegExp.$1, replaceStr);
+        }
+    }
+    return format.replace(/NaN-aN-aN/g,"");
+};
+
+
+String.prototype.trim=function(){
+    return this.replace(/(^\s*)|(\s*$)/g, "");
+}
+String.prototype.ltrim=function(){
+    return this.replace(/(^\s*)/g,"");
+}
+String.prototype.rtrim=function(){
+    return this.replace(/(\s*$)/g,"");
+}
+String.prototype.isBlank=function(){
+    return !this || this.replace(/(^\s*$)/g,"");
+}
+String.prototype.isEmpty=function(){
+    return this.replace(/(^\s*$)/g,"");
+}
+
+/**
+ * @desc 格式化输入字符串
+ * 示例: "hello {0}".format('world')；返回'hello world'
+ * @return {String}
+ */
+String.prototype.format = function() {
+    var a = arguments;
+    return this.replace(/\{(\d+)\}/g, function(s, i) {
+        return a[i];
+    });
+}
+
+/**
+ * @desc url格式校验
+ * @return {boolean}
+ */
+String.prototype.isUrl = function(){
+    var strRegex = "^((https|http|ftp|rtsp|mms)?://)"
+        + "?(([0-9a-z\u4E00-\u9FA5_!~*'().&=+$%-]+: )?[0-9a-z_!~*'().&=+$%-]+@)?"   //ftp's user
+        + "(([0-9]{1,3}\.){3}[0-9]{1,3}"  //ip format url
+        + "|" //IP or domain name
+        + "([0-9a-z\u4E00-\u9FA5_!~*'()-]+\.)*"  //domain name : www
+        + "([0-9a-z\u4E00-\u9FA5][0-9a-z\u4E00-\u9FA5-]{0,61})?[0-9a-z\u4E00-\u9FA5]\."  //the second level domain name
+        + "[a-z]{2,6})" //first level domain .com or .museum
+        + "(:[0-9]{1,4})?"  //port
+        + "((/?)|"  // a slash isn't required if there is no file name
+        + "(/[0-9a-zA-Z_!~*'().;?:@&=+$,%#-]+)+/?)$";
+    var re = new RegExp(strRegex);
+    return re.test(this);
+};
+
+/**
+ * @desc email格式校验
+ * @param {string} strValue
+ * @return {boolean}
+ */
+String.prototype.isEmail = function(){
+    var emailExp  = /(^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$)/;
+    return emailExp.test(this);
+};
+/**
+ * @desc password格式校验
+ * @param {string} strValue
+ * @return {boolean}
+ */
+String.prototype.isPassword= function(){
+    // var passwordExp  = /^(?!\d+$)(?!^[a-zA-Z]+$)[\w]{6,20}$/;
+    var passwordExp  = /^((?=.*[0-9])(?=.*[a-zA-Z]))|(((?=.*[0-9])(?=.*[a-zA-Z]))(?=.*[!@#$%^&*,./;'\[\]\-=+\{}:"<>\?])){6,20}$/;
+    return passwordExp.test(this);
+};
+/**
+ * @desc 域名格式校验
+ * @param {string} domain
+ * @return {boolean}
+ */
+String.prototype.isDomain = function(){
+    var domain = this;
+    var reg = new RegExp(/^((([A-Za-z0-9_-\u4E00-\u9FA5])|(\*))+\.)?([A-Za-z0-9_-\u4E00-\u9FA5]{1,200})$/);
+    var domainPostfix = new Array(".gov.mo",".com.tw",".com.mo",".co.cc",".ce.ms",".osa.pl",".c.la",".com.hk",".net.in",".edu.tw",".org.tw",".bij.pl",".ac.cn",".ah.cn",".bj.cn",".com.cn",".cq.cn",".fj.cn",".gd.cn",".gov.cn",".gs.cn",".gx.cn",".gz.cn",".ha.cn",".hb.cn",".he.cn",".hi.cn",".hk.cn",".hl.cn",".hn.cn",".jl.cn",".js.cn",".jx.cn",".ln.cn",".mo.cn",".net.cn",".nm.cn",".nx.cn",".org.cn",".qh.cn",".sc.cn",".sd.cn",".sh.cn",".sn.cn",".sx.cn",".tj.cn",".tw.cn",".xj.cn",".xz.cn",".yn.cn",".zj.cn",".nl.ae",".org.uk",".org.nz",".org.bz",".org.au",".com.nu",".com.my",".com.au",".co.uk",".co.kr",".co.jp",".nu.ae",".nl.ae",".com.au",".cf.gs",".com.cn",".net.cn",".org.cn",".edu.cn",".com",".cn",".mobi",".tel",".asia",".net",".org",".name",".me",".info",".cc",".hk",".biz",".tv",".la",".fm",".cm",".am",".sh",".us",".in",".ro",".ru",".hu",".tk",".co",".cx",".at",".tw",".ws",".vg",".vc",".uz",".to",".tl",".th",".tf",".tc",".st",".so",".sk",".sg",".sc",".pl",".pe",".nu",".nf",".ne",".my",".mu",".ms",".mo",".lv",".lt",".lc",".jp",".it",".io",".im",".ie",".gs",".gp",".gl",".gg",".gd",".fr",".fi",".eu",".edu",".dk",".de",".cz",".ch",".ca",".bi",".be",".au",".ae",".pw",".ly",".wang",".ren",".top",".club");
+    var isReplaced = false;
+    for(var idx=0; idx < domainPostfix.length; idx++){
+        var postFix = domainPostfix[idx];
+        var regStr = "(\\"+postFix+")$";
+        var endReg = new RegExp(regStr);
+        if(endReg.test(domain.toLowerCase())){
+            isReplaced = true;
+        }
+        domain = domain.replace(postFix,"");
+    }
+    if(!isReplaced){
+        return false;
+    }
+    return reg.test(domain);
+};
+
+/**
+ * @desc 邮编格式校验
+ * @param String zipcode
+ * @return boolean
+ */
+String.prototype.isZipCode = function (){
+    var reg = /^[0-9]{6}$/;
+    return reg.test(this);
+};
+
+/**
+ * @desc 固定电话格式校验
+ * @param String phone
+ * @return boolean
+ */
+String.prototype.isPhone = function (){
+    var reg = /((^(\+86)|(86))?(((\d{7,8})|(\d{4}|\d{3})-(\d{7,8})|(\d{4}|\d{3})-(\d{7,8})-(\d{4}|\d{3}|\d{2}|\d{1})|(\d{7,8})-(\d{4}|\d{3}|\d{2}|\d{1}))$))/;
+    return reg.test(this);
+};
+
+/**
+ * @desc 手机号码格式校验
+ * @param String mobile
+ * @return boolean
+ */
+String.prototype.isMobile = function(){
+    var reg = /^(\+86)|(86)?(^((1[3,5,8][0-9])|(14[5,7]))\d{8}$)/;
+    return reg.test(this);
+};
+
+/**
+ * @desc 纯数字校验
+ * @param String mobile
+ * @return boolean
+ */
+String.prototype.isNumber = function(){
+    var reg = /^[0-9]+$/;
+    return reg.test(this);
+};
+
+
+/**
+ * @desc 是否为局域网IP
+ * @param String ip
+ * @return boolean
+ */
+String.prototype.isLanIp = function(){
+    var reg = /(127[\.]0[\.]0[\.]1)|(localhost)|(^10[\.]\d{1,3}[\.]\d{1,3}[\.]\d{1,3})|(172[\.]((1[6-9])|(2\d)|(3[01]))[\.]\d{1,3}[\.]\d{1,3})|(192[\.]168[\.]\d{1,3}[\.]\d{1,3})|(255[\.]\d{1,3}[\.]\d{1,3}[\.]\d{1,3})/;
+    return reg.test(this);
+}

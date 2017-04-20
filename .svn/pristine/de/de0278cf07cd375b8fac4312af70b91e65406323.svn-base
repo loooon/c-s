@@ -1,0 +1,113 @@
+package com.credit.web.model;
+
+import com.alibaba.fastjson.annotation.JSONField;
+
+/**
+ * Created by wangjunling on 2017/3/29.
+ */
+public class GrayscaleStat
+{
+    @JSONField(name = "l3mwdcn_TTimesOut")
+    private Integer l3mwdcn_TTimesOut = 0;// 近三个月主叫催收号码次数
+
+    @JSONField(name = "l3mwdcn_TTimesIn")
+    private Integer l3mwdcn_TTimesIn = 0;// 近三个月被催收号码呼叫次数
+
+    @JSONField(name = "l3mwdcn_TNumsCon")
+    private Integer l3mwdcn_TNumsCon = 0;// 近三个月涉及催收号码总个数
+
+    @JSONField(name = "l3mwdcn_TNumsCon_org")
+    private Integer l3mwdcn_TNumsCon_org = 0;// 近三个月涉及催收号码总机构数
+
+    @JSONField(name = "l3mwdcn_TNumsCon_bank")
+    private Integer l3mwdcn_TNumsCon_bank = 0;// 近三个月涉及银行机构数
+
+    @JSONField(name = "l3mwdcn_TNumsCon_cf")
+    private Integer l3mwdcn_TNumsCon_cf = 0;// 近三个月涉及消费金融机构数
+
+    @JSONField(name = "l3mwdcn_TNumsCon_f")
+    private Integer l3mwdcn_TNumsCon_f = 0;// 近三个月涉及催收机构数
+
+    @JSONField(name = "l3mwdcn_TNumsCon_if")
+    private Integer l3mwdcn_TNumsCon_if = 0;// 近三个月涉及互联网金融机构数
+
+    public Integer getL3mwdcn_TTimesOut()
+    {
+        return l3mwdcn_TTimesOut;
+    }
+
+    public void setL3mwdcn_TTimesOut(Integer l3mwdcn_TTimesOut)
+    {
+        this.l3mwdcn_TTimesOut = l3mwdcn_TTimesOut;
+    }
+
+    public Integer getL3mwdcn_TTimesIn()
+    {
+        return l3mwdcn_TTimesIn;
+    }
+
+    public void setL3mwdcn_TTimesIn(Integer l3mwdcn_TTimesIn)
+    {
+        this.l3mwdcn_TTimesIn = l3mwdcn_TTimesIn;
+    }
+
+    public Integer getL3mwdcn_TNumsCon()
+    {
+        return l3mwdcn_TNumsCon;
+    }
+
+    public void setL3mwdcn_TNumsCon(Integer l3mwdcn_TNumsCon)
+    {
+        this.l3mwdcn_TNumsCon = l3mwdcn_TNumsCon;
+    }
+
+    public Integer getL3mwdcn_TNumsCon_org()
+    {
+        return l3mwdcn_TNumsCon_org;
+    }
+
+    public void setL3mwdcn_TNumsCon_org(Integer l3mwdcn_TNumsCon_org)
+    {
+        this.l3mwdcn_TNumsCon_org = l3mwdcn_TNumsCon_org;
+    }
+
+    public Integer getL3mwdcn_TNumsCon_bank()
+    {
+        return l3mwdcn_TNumsCon_bank;
+    }
+
+    public void setL3mwdcn_TNumsCon_bank(Integer l3mwdcn_TNumsCon_bank)
+    {
+        this.l3mwdcn_TNumsCon_bank = l3mwdcn_TNumsCon_bank;
+    }
+
+    public Integer getL3mwdcn_TNumsCon_cf()
+    {
+        return l3mwdcn_TNumsCon_cf;
+    }
+
+    public void setL3mwdcn_TNumsCon_cf(Integer l3mwdcn_TNumsCon_cf)
+    {
+        this.l3mwdcn_TNumsCon_cf = l3mwdcn_TNumsCon_cf;
+    }
+
+    public Integer getL3mwdcn_TNumsCon_f()
+    {
+        return l3mwdcn_TNumsCon_f;
+    }
+
+    public void setL3mwdcn_TNumsCon_f(Integer l3mwdcn_TNumsCon_f)
+    {
+        this.l3mwdcn_TNumsCon_f = l3mwdcn_TNumsCon_f;
+    }
+
+    public Integer getL3mwdcn_TNumsCon_if()
+    {
+        return l3mwdcn_TNumsCon_if;
+    }
+
+    public void setL3mwdcn_TNumsCon_if(Integer l3mwdcn_TNumsCon_if)
+    {
+        this.l3mwdcn_TNumsCon_if = l3mwdcn_TNumsCon_if;
+    }
+}

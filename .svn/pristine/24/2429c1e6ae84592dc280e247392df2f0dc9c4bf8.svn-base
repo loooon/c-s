@@ -1,0 +1,43 @@
+package com.credit.web.listener;
+
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+
+import com.credit.web.AppContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+
+public class ServletContextListenerImpl implements ServletContextListener
+{
+    private static final Logger logger = LoggerFactory.getLogger(ServletContextListenerImpl.class);
+
+    @Override
+    public void contextInitialized(ServletContextEvent event)
+    {
+        try
+        {
+            AppContext.init(event.getServletContext().getRealPath("/"));
+        }
+        catch(Exception e)
+        {
+            logger.error("ServletContextListenerImpl::contextInitialized::init fail!", e);
+        }
+    }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent event)
+    {
+        try
+        {
+            AppContext.uninit();
+        }
+        catch(Exception e)
+        {
+            logger.error("ServletContextListenerImpl::contextInitialized::uninit fail!", e);
+        }
+    }
+
+
+}

@@ -1,0 +1,130 @@
+
+RSF.regist("Credit.User.Personal");
+Credit.User.Personal =  function(){
+
+}
+
+Credit.User.Personal.prototype = {
+    'init':function(){
+        // new SelectHandler($('.m-nav ul li'), false, true);
+        // new SelectDiv($('.m-nav ul li'),$('.m-content'));
+      /*  $('.m-title .m-title-t3').click(function (e) {
+            // $('#id_check').reset();
+            $(':input','#id_check')
+                .not(':button, :submit, :reset, :hidden')
+                .val('');
+            $(':input','#card_check')
+                .not(':button, :submit, :reset, :hidden')
+                .val('');
+            $('.form-msg').hide();
+            $('.result').hide();
+            $('.default').show();
+        });*/
+       /* $('.id-verify .select-click').click(function (e) {
+            $(".input-select").toggle();
+            $(document).one("click", function(e){
+                $(".input-select").hide();
+            });
+            e.stopPropagation();
+            return false;
+        }.bind(this));
+        $('.input-select ul li').click(function (e) {
+            $(".input-select").hide();
+            $('#select-type').val($(e.currentTarget).html());
+            $('#select-type-none').val($(e.currentTarget).attr("code"));
+        });*/
+        $('.id-verify .select-click').click(function (e) {
+            $(".input-select-d").toggle();
+            $(document).one("click", function(e){
+                $(".input-select-d").hide();
+            });
+            e.stopPropagation();
+            return false;
+        });
+
+        $(".id-verify").on('click','.select-click',function (e) {
+            $(this).closest('p').next().toggle();
+            // $(".input-select-d").toggle();
+            $(document).one("click", function(e){
+                $(this).closest('p').next().hide();
+            });
+            e.stopPropagation();
+            return false;
+        });
+
+        $(".id-verify").on('click','.input-select-d ul li',function (e) {
+            $('.input-select-d').hide();
+            $(this).closest('div').prev().find('input').val($(e.currentTarget).html());
+            // $('#select-type-d-none').val($(e.currentTarget).attr("code"));
+        });
+        this.search();
+
+    },
+    'search':function () {
+        var form_id = new mForm($("#id_check"));
+        form_id.isAjax=false;
+        form_id.loadDate=function () {
+            $('.id-verify .c-right3 div').hide();
+            $('.id-verify .loading').show();
+        };
+        form_id.submitError=function () {
+                $('.id-verify .c-right3 div').hide();
+                $('.id-verify .no-result').show();
+        };
+        form_id.afterSubmit=function (data) {
+            $('.id-verify .c-right3> div').hide();
+            if(data!=''&&data!=null){
+                var s_type=$('#select-type').val();
+                if(data.result==0){
+                    $('p.ty1 span').html(data.data.status);
+                    $('p.ty2 span').html(data.data.address);
+                    $('p.ty2,p.ty3').hide();
+                    $('p.ty3 span img').attr("src","data:image/png;base64,"+data.data.photo);
+                    if(s_type=='基本查询加地址'){
+                        $('p.ty2').show();
+                    }
+                    if(s_type=='基本查询加照片'){
+                        $('p.ty3').show();
+                    }
+                    if(s_type=='全部信息'){
+                        $('p.ty2,p.ty3').show();
+                    }
+                    $('.id-verify .result .result-on').show();
+                    $('.id-verify .result').show()
+                }else{
+                    $('.id-verify .result  .result-off span').html(data.message);
+                    $('.id-verify .result .result-off').show();
+                    $('.id-verify .result').show();
+                }
+            }else{
+                $('.id-verify .no-result').show();
+            }
+
+        };
+  /*      var form_card = new mForm($("#card_check"));
+        form_card.isAjax=true;
+        form_card.loadDate=function () {
+            $('.card-verify .c-right3 div').hide();
+            $('.card-verify .loading').show();
+        };
+        form_card.submitError=function () {
+            $('.card-verify .c-right3 div').hide();
+            $('.card-verify .no-result').show();
+        };
+        form_card.afterSubmit=function (data) {
+            console.log(data);
+            $('.card-verify .c-right3> div').hide();
+            if(data!=''&&data!=null){
+                if(data.result==0){
+                    $('.card-verify .result span').html(data.data.description);
+                }else{
+                    $('.card-verify .result span').html("暂无查询结果");
+                }
+                $('.card-verify .result').show();
+            }else{
+                $('.card-verify .no-result').show();
+            }
+        };*/
+    }
+}
+

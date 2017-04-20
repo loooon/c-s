@@ -1,0 +1,513 @@
+package com.credit.common.cfg;
+
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.credit.common.cfg.store.IConfigStore;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+/**
+ * 可配置对象的抽象基类。
+ *  <p>
+ * 配置参数是子类的public、非static、非final的属性，这些属性在初始化时从config
+ * store中获取，用反射依据类型参数 设置到类实例中，保存时仍用反射机制写入到config store中。
+ * 
+ * @author xuji
+ * @version 1.0
+ * @since 1.0
+ */
+abstract public class ConfigObj implements Serializable
+{
+    private static final long serialVersionUID = 1L;
+
+    private static Logger logger = LoggerFactory.getLogger(ConfigObj.class);
+
+    /**
+     * 保存配置变化侦听器
+     */
+    protected static Map m_listeners = new HashMap();
+
+    /**
+     * 获取该对象所在的{@link koal.cfg.IConfigStore Config Store}
+     * 
+     * @return
+     */
+    abstract protected IConfigStore getCfgStore();
+
+    /**
+     * 配置更新后，验证新配置是否有效，需要子类重载实现
+     */
+    abstract public void verifyConfig() throws Exception;
+
+    /**
+     * 某个配置项是否需要加密
+     * 
+     * @param name
+     *            配置项名称
+     * @return
+     */
+    public boolean needEncrypt(String name)
+    {
+        return false;
+    }
+
+    /**
+     * 缺省构造函数，此构造函数会用反射机制，自动加载类的public属性 注意：如果子类的public属性有赋缺省值的操作，如： public
+     * String name = ""; 此复制操作将在父类的初始化函数完成后再执行，这将导致配置参数被重写 解决的办法是在构造函数中再此调用init
+     */
+    protected ConfigObj()
+    {
+        init();
+    }
+
+    // 将配置从Store中读入
+    protected void init()
+    {
+        getCfgStore().getFromStore(this);
+    }
+
+    /**
+     * 保存配置，如果有侦听者不喜欢新配置，异常将抛出，配置仍恢复原样 保存数据到store中也可能回有异常，这种情况应该尽量避免。
+     * 此过程同步以防止并发修改
+     * 
+     * @throws Exception
+     */
+    public synchronized void save() throws Exception
+    {
+        try
+        {
+            verifyConfig();
+        }
+        catch (Exception e)
+        {
+            // 验证配置失败，全部回滚
+            rollbackListener(this, -1);
+
+            String err = "无效的配置，配置数据已经回滚。原因：" + e.getMessage();
+            logger.error(err, e);
+            throw new Exception(err, e);
+        }
+
+        // 更新前调用侦听者
+        beforeUpdate(this);
+
+        try
+        {
+            getCfgStore().setToStore(this);
+            getCfgStore().save();
+        }
+        catch (Exception e)
+        {
+            // 保存配置失败，全部回滚
+            rollbackListener(this, -1);
+
+            String err = "保存配置失败，配置数据已经回滚。原因：" + e.getMessage();
+            logger.error(err);
+            throw new Exception(err, e);
+        }
+
+        // 回调各个侦听器
+        afterUpdate(this);
+    }
+
+    /**
+     * 对该对象增加一个侦听参数变化的侦听器
+     * 
+     * @param listener
+     */
+    public void addListener(IConfigChangeListener listener)
+    {
+        addListener(this, listener);
+    }
+
+    /**
+     * 对该对象移除侦听器
+     * 
+     * @param listener
+     */
+    public void removeListener(IConfigChangeListener listener)
+    {
+        removeListener(this, listener);
+    }
+
+    /**
+     * 增加侦听参数变化的侦听器，针对全局或者特定配置对象
+     * 
+     * @param cfgObj
+     *            ：如果为null，侦听所有变化
+     * @param listener
+     *            : 新加的侦听器
+     * @throws Exception
+     */
+    public static void addListener(ConfigObj cfgObj, IConfigChangeListener listener)
+    {
+        if (cfgObj == null || listener == null)
+            return;
+
+        List listenrs = (List) m_listeners.get(cfgObj);
+        if (listenrs != null)
+        {
+            // 对改对象的侦听组已经存在
+            if (listenrs.indexOf(listener) < 0)
+                // 如果未包含，增加
+                listenrs.add(listener);
+        }
+        else
+        {
+            // 不存在，创建新组
+            List newListenrs = new ArrayList();
+            newListenrs.add(listener);
+            m_listeners.put(cfgObj, newListenrs);
+        }
+
+    }
+
+    /**
+     * 移除侦听器，针对全局或者特定配置对象
+     * 
+     * @param cfgObj
+     *            ：如果为null，全局侦听器
+     * @param listener
+     * @throws Exception
+     */
+    public static void removeListener(ConfigObj cfgObj, IConfigChangeListener listener)
+    {
+        if (cfgObj == null || listener == null)
+            return;
+
+        List listenrs = (List) m_listeners.get(cfgObj);
+        if (listenrs != null)
+        {
+            listenrs.remove(listener);
+        }
+    }
+
+    /**
+     * 回滚，辅助函数
+     * 
+     * @param cfgObj
+     * @param maxIndex
+     */
+    protected static void rollbackListener(ConfigObj cfgObj, int maxIndex)
+    {
+        int max = maxIndex;
+
+        cfgObj.getCfgStore().getFromStore(cfgObj);
+        // 回滚已经操作过的listener
+        List listenrs = (List) m_listeners.get(cfgObj);
+        if (listenrs != null)
+        {
+            if (max < 0) // 全部回滚
+                max = listenrs.size();
+
+            for (int i = 0; i < max; i++)
+            {
+                ((IConfigChangeListener) listenrs.get(i)).rollbackChange(cfgObj);
+            }
+        }
+    }
+
+    /**
+     * 配置更新前调用侦听器
+     * 
+     * @param cfgObj
+     * @throws Exception
+     */
+    protected static void beforeUpdate(ConfigObj cfgObj) throws Exception
+    {
+        int i = 0;
+        List listenrs = (List) m_listeners.get(cfgObj);
+        if (listenrs != null)
+        {
+            try
+            {
+                for (i = 0; i < listenrs.size(); i++)
+                    ((IConfigChangeListener) listenrs.get(i)).onChange(cfgObj);
+            }
+            catch (Exception e)
+            {
+                // 有人不喜欢新改变，回滚已经onChange的listener
+                rollbackListener(cfgObj, i);
+
+                String err = "更新配置失败，配置数据已经回滚。原因：" + e.getMessage();
+                logger.error(err);
+                throw new Exception(err, e);
+            }
+        }
+    }
+
+    /**
+     * 配置更新成功后调用每个侦听器提交
+     * 
+     * @param cfgObj
+     */
+    protected static void afterUpdate(ConfigObj cfgObj)
+    {
+        List listenrs = (List) m_listeners.get(cfgObj);
+        if (listenrs != null)
+        {
+            for (int i = 0; i < listenrs.size(); i++)
+                ((IConfigChangeListener) listenrs.get(i)).commitChange(cfgObj);
+        }
+    }
+
+    /**
+     * 获取配置项的描述信息，缺省为空
+     * 
+     * @param name
+     * @return
+     */
+    public String getDescript(String name)
+    {
+        return "";
+    }
+
+    /**
+     * 从配置对象中得到参数->数值的Map
+     * 
+     * @param cfgObj
+     * @return
+     */
+    public Map getDataAsMap()
+    {
+        // 使用反射方法得到
+        Field[] fields = getClass().getFields();
+
+        Map mapData = new HashMap();
+        for (int i = 0; i < fields.length; i++)
+        {
+            Field field = fields[i];
+
+            int mod = field.getModifiers();
+            if ((!Modifier.isPublic(mod)) || Modifier.isFinal(mod) || Modifier.isStatic(mod))
+                continue;
+
+            String key = field.getName();
+            try
+            {
+                mapData.put(key, field.get(this));
+            }
+            catch (Exception e)
+            {
+                logger.error("ConfigObj::getDataAsMap::exception occurs!", e);
+            }
+        }
+
+        return mapData;
+    }
+
+    /**
+     * 更新配置对象
+     * 
+     * @param mapData
+     *            待更新的数据
+     * @param ignoreNull
+     *            是否忽略null数据。 true: 这些配置项仍保留原值 false: 这些配置项被设置为null
+     * @throws Exception
+     */
+    public void setDataFromMap(Map mapData, boolean ignoreNull) throws Exception
+    {
+        Field[] fields = getClass().getFields();
+
+        try
+        {
+            for (int i = 0; i < fields.length; i++)
+            {
+                Field field = fields[i];
+                String key = field.getName();
+
+                if (!mapData.containsKey(key))
+                    continue;
+
+                int mod = field.getModifiers();
+                if ((!Modifier.isPublic(mod)) || Modifier.isFinal(mod) || Modifier.isStatic(mod))
+                    continue;
+
+                setObjField(this, field, mapData.get(key), ignoreNull);
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error("ConfigObj::setDataFromMap::exception occurs!", e);
+            throw new Exception(e);
+        }
+    }
+
+    private static final String VAR_BEGIN = "${";
+
+    private static final String VAR_END = "}";
+
+    private static Pattern VAR_PATTERN = Pattern.compile("\\$\\{(.*?)\\}");
+
+    /**
+     * 获取"..${name1}...${name2}... "中这些被引用的名称的数组["name1", "name2", ..]
+     * 
+     * @param s
+     * @return
+     */
+    public static final Set getRefVars(String s)
+    {
+        Set vars = new HashSet();
+        Matcher m = VAR_PATTERN.matcher(s);
+        while (m.find())
+        {
+            vars.add(m.group(1));
+        }
+        return vars;
+    }
+
+    /**
+     * 辅助函数，用于帮助解析形如 "${ip}"这样的引用参数。 <p> 支持多级引用，如"${var1}" -> "${var2}" ->
+     * "${var3}"，最大16级，如果引用次数超过16次，将会抛出异常。
+     * 
+     * @param obj
+     *            被引用的对象
+     * @param s
+     *            字符串
+     * @return
+     */
+    public static final String interpretString(Object obj, String s)
+    {
+        String ret = s;
+        // 使用反射方法得到
+        Field[] fields = obj.getClass().getFields();
+
+        for (int loop = 0;; loop++)
+        {
+            Set vars = getRefVars(ret);
+            if (vars.isEmpty())
+                break;
+            for (int i = 0; i < fields.length; i++)
+            {
+                Field field = fields[i];
+                String key = field.getName();
+                if (!vars.contains(key))
+                {
+                    continue;
+                }
+
+                Object val = null;
+                try
+                {
+                    val = field.get(obj);
+                }
+                catch (Exception e)
+                {
+                    logger.error("ConfigObj::interpretString::exception occurs", e);
+                    continue;
+                }
+                String strVal = (val != null) ? val.toString() : "";
+                ret = StringUtils.replace(ret, VAR_BEGIN + key + VAR_END, strVal);
+            }
+
+            if (loop > 16)
+            {
+                throw new UnsupportedOperationException("递归层次超过16次" + s);
+            }
+        }
+
+        return ret;
+    }
+
+    /**
+     * @param obj
+     *            : 待设置的对象
+     * @param field
+     *            : 待设置的对象属性
+     * @param value
+     *            : 所设置的值
+     * @param ignoreNull
+     *            : true:忽略value = null的值
+     */
+    public static final void setObjField(Object obj, Field field, Object value, boolean ignoreNull) throws Exception
+    {
+        try
+        {
+            if (value == null)
+            {
+                if (!ignoreNull)
+                {
+                    field.set(obj, null);
+                }
+                return;
+            }
+
+            String strVal = value.toString();
+
+            if (strVal == null || strVal.length() < 1)
+            {
+                return;
+            }
+
+            if (Boolean.TYPE == field.getType())
+            {
+                field.setBoolean(obj, Boolean.valueOf(strVal).booleanValue());
+            }
+            else
+            {
+                if (Byte.TYPE == field.getType())
+                {
+                    field.setByte(obj, Byte.parseByte(strVal));
+                }
+                else
+                {
+                    if (Character.TYPE == field.getType())
+                    {
+                        field.setChar(obj, strVal.charAt(0));
+                    }
+                    else
+                    {
+                        if (Double.TYPE == field.getType())
+                        {
+                            field.setDouble(obj, Double.parseDouble(strVal));
+                        }
+                        else
+                        {
+                            if (Float.TYPE == field.getType())
+                            {
+                                field.setFloat(obj, Float.parseFloat(strVal));
+                            }
+                            else
+                            {
+                                if (Integer.TYPE == field.getType())
+                                {
+                                    field.setInt(obj, Integer.parseInt(strVal));
+                                }
+                                else
+                                {
+                                    if (Long.TYPE == field.getType())
+                                    {
+                                        field.setLong(obj, Long.parseLong(strVal));
+                                    }
+                                    else
+                                    {
+                                        if (Short.TYPE == field.getType())
+                                        {
+                                            field.setShort(obj, Short.parseShort(strVal));
+                                        }
+                                        else
+                                        {
+                                            field.set(obj, value);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error("ConfigObj::setObjField::exception occurs!", e);
+            throw new Exception(e);
+        }
+    }
+}

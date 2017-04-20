@@ -1,0 +1,15 @@
+package com.credit.service;
+
+import com.credit.common.exception.ServiceException;
+import com.credit.entity.model.MailModel;
+
+import javax.mail.MessagingException;
+
+/**
+ * Created by Michael Chan on 3/9/2017.
+ */
+public interface EmailService
+{
+     void emailManage(String password) throws ServiceException;
+     void sendEmail(MailModel mail,String text) throws ServiceException,MessagingException;
+}

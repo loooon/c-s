@@ -1,0 +1,10 @@
+#email configuration
+mail.host=smtp.163.com
+mail.username=18817507350@163.com
+mail.password=asdzxc618
+#发件人
+mail.from=18817507350@163.com
+#收件人（多个用,隔开）
+mail.to=2285668943@qq.com
+#主题
+mail.subject=testEmail

@@ -1,0 +1,527 @@
+package com.credit.web.controller;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import com.credit.service.DunNumberDistService;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+
+import com.credit.common.cache.CacheFactory;
+import com.credit.common.cache.ICache;
+import com.credit.common.exception.ServiceException;
+import com.credit.common.result.ResultJson;
+import com.credit.common.util.CollectionUtil;
+import com.credit.common.util.RandomUtil;
+import com.credit.common.util.servlet.RequestUtil;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.DunNumberCount;
+import com.credit.entity.DunNumberDist;
+import com.credit.entity.DunNumberQueryRecord;
+import com.credit.entity.NumberTag;
+import com.credit.service.DunNumberCountService;
+import com.credit.service.DunNumberQueryRecordService;
+import com.credit.service.DunNumberSearchHistoryService;
+import com.credit.service.cache.DunNumberDistCache;
+import com.credit.service.cache.NumberTagCache;
+import com.credit.web.crawler.NumberTagCrawler;
+import com.credit.web.model.DunNumberDistModel;
+import com.credit.web.util.MatchPhoneUtil;
+import com.google.common.collect.Lists;
+
+/**
+ * Created by wangjunling on 2017/3/21.
+ */
+@Controller
+@RequestMapping("/dun")
+public class DunYellowPageController extends AbstractBaseController
+{
+    @Resource
+    private DunNumberCountService dunNumberCountService;
+
+    @Resource
+    private DunNumberQueryRecordService dunNumberQueryRecordService;
+
+    @Resource
+    private DunNumberSearchHistoryService dunNumberSearchHistoryService;
+
+    @Value("${dun.query.max.times}")
+    private Integer dunQueryMaxTimes;
+
+    @Resource
+    TaskExecutor asyncExecutor;
+
+    @Value("${auth.file.path}")
+    private String tempFilePath;
+
+    @RequestMapping(value = "/index", method = RequestMethod.GET)
+    public String index()
+    {
+        return "dun/index";
+    }
+
+    @RequestMapping(value = "/search", method = RequestMethod.GET)
+    public String search()
+    {
+        return "dun/search";
+    }
+
+    @RequestMapping(value = "/m/index", method = RequestMethod.GET)
+    public String mIndex()
+    {
+        return "dun/mobile/index";
+    }
+
+    @RequestMapping(value = "/query", method = RequestMethod.GET)
+    @ResponseBody
+    public ResultJson index(String phone, HttpServletRequest request)
+    {
+        if (StringUtils.isBlank(phone))
+        {
+            return new ResultJson().paramError();
+        }
+        try
+        {
+            String ip = RequestUtil.gettRequestIP(request);
+            if (isFluentQuery(ip))
+            {
+                return new ResultJson().error(ResultJson.STATUS_CODE_FAIL, "频率过快，请稍后再试!");
+            }
+            NumberTag numberTag = NumberTagCache.getInstance().getNumberTagCacheData(phone);
+            if (numberTag == null)
+            {
+                numberTag = NumberTagCrawler.searchNumberTag(phone);
+            }
+            dunNumberSearchHistoryService.saveSearchHistory(phone,ip,numberTag);
+            if (numberTag == null)
+            {
+                return new ResultJson().noData();
+            }
+            return new ResultJson().success(numberTag);
+        }
+        catch (Exception e)
+        {
+            logger.error("获取numberTag异常", e);
+            return new ResultJson().error();
+        }
+
+    }
+
+    private static final ICache<String, Integer> ipCache = CacheFactory.getInstance()
+            .newCache(1, TimeUnit.DAYS, 100000);
+
+    private boolean isFluentQuery(String ip) throws Exception
+    {
+        Integer value = ipCache.get(ip);
+        if (value != null)
+        {
+            if (value > dunQueryMaxTimes - 1)
+            {
+                return true;
+            }
+            else
+            {
+                ipCache.cache(ip, ++value);
+                return false;
+            }
+        }
+        ipCache.cache(ip, 1);
+        return false;
+    }
+
+    @RequestMapping(value = "/count", method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson count()
+    {
+        try
+        {
+            List<DunNumberCount> numberCountList = dunNumberCountService.searchAll();
+            Map<String, Object> result = new HashMap<>();
+            for (DunNumberCount numberCount : numberCountList)
+            {
+                if (numberCount.getType().equals(DunNumberCount.FIND_COUNT))
+                {
+                    result.put(DunNumberCount.FIND_COUNT, numberCount.getCount());
+                }
+                if (numberCount.getType().equals(DunNumberCount.COVERAGE_COUNT))
+                {
+                    result.put(DunNumberCount.COVERAGE_COUNT, numberCount.getCount());
+                }
+            }
+            return new ResultJson().success(result);
+        }
+        catch (Exception e)
+        {
+            logger.error("查询dunNumberCount异常", e);
+            return new ResultJson().error();
+        }
+    }
+
+    @RequestMapping(value = "/batch", method = RequestMethod.GET)
+    public String batch()
+    {
+        return "dun/batch";
+    }
+
+    @RequestMapping(value = "/result", method = RequestMethod.GET)
+    public String batchResult()
+    {
+        return "dun/result";
+    }
+
+    @RequestMapping(value = "/batch", method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson batch(HttpServletRequest request, ModelMap model)
+    {
+        int allowMaxSize = 9;
+        int findNumberCount = 0;
+        boolean isGreaterThanMaxSize = false;
+
+        // 将当前上下文初始化给 CommonsMutipartResolver （多部分解析器）
+        CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver(request.getSession()
+                .getServletContext());
+        multipartResolver.setDefaultEncoding("utf-8");
+        MultipartFile multipartFile;
+        // 检查form中是否有enctype="multipart/form-data"
+
+        if (!multipartResolver.isMultipart(request))
+        {
+            return new ResultJson().paramError("上传的文本文件为空");
+        }
+        // 将request变成多部分request
+        MultipartHttpServletRequest multiRequest = (MultipartHttpServletRequest) request;
+        // 获取multiRequest 中所有的文件名
+        multipartFile = multiRequest.getFile("file");
+        if (multipartFile == null)
+        {
+            return new ResultJson().paramError("上传的文本文件为空");
+        }
+        List<String> lineList;
+        try
+        {
+            InputStream inputStream = multipartFile.getInputStream();
+            // numberList = IOUtils.readLines(multipartFile.getInputStream());
+            lineList = IOUtils.readLines(inputStream);
+            if (CollectionUtil.isEmpty(lineList))
+            {
+                return new ResultJson().paramError("上传文件内容为空");
+            }
+        }
+        catch (IOException e)
+        {
+            logger.error("读取文件异常", e);
+            return new ResultJson().error();
+        }
+        List<String> numberList = MatchPhoneUtil.match(lineList);
+        findNumberCount = numberList.size();
+        Set<String> numberSet = new TreeSet<>(numberList);
+        List<NumberTag> numberTags = new ArrayList<>();
+
+        NumberTagCache instance = NumberTagCache.getInstance();
+        List<String> noFindList = new ArrayList<>();
+
+        try
+        {
+            for (String s : numberSet)
+            {
+                NumberTag numberTag = instance.getNumberTagCacheData(s);
+                if (numberTag == null)
+                {
+                    noFindList.add(s);
+                    continue;
+                }
+                numberTag.setPhoneNumber(s);
+                numberTags.add(numberTag);
+            }
+
+			List<NumberTag> tags = NumberTagCrawler.searchNumberTag(noFindList);
+			if (tags != null && tags.size() > 0)
+			{
+				numberTags.addAll(tags);
+			}
+        }
+        catch (ServiceException e)
+        {
+            logger.error(e.getMessage(), e);
+            return new ResultJson().error(e.getMessage());
+        }
+        int maxSize = numberTags.size();
+        if (numberTags.size() >= allowMaxSize)
+        {
+            isGreaterThanMaxSize = true;
+            numberTags = numberTags.subList(0, allowMaxSize);
+        }
+        Map<String, Object> result = new HashMap<>();
+
+        result.put("isGreaterThan", isGreaterThanMaxSize);
+        result.put("resultList", numberTags);
+        result.put("maxSize", maxSize);
+        result.put("findNumberCount", findNumberCount);
+        return new ResultJson().success(result);
+    }
+
+    @RequestMapping(value = "/auth", method = RequestMethod.GET)
+    public String auth()
+    {
+        return "dun/auth";
+    }
+
+    @RequestMapping(value = "/auth", method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson batch(String phone,String contactPhone, HttpServletRequest request)
+    {
+        if (StringUtils.isBlank(phone))
+        {
+            return new ResultJson().paramError("手机号不能为空");
+        }
+		if (StringUtils.isBlank(contactPhone))
+		{
+			return new ResultJson().paramError("联系方式不能为空");
+		}
+        // 将当前上下文初始化给 CommonsMutipartResolver （多部分解析器）
+        CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver(request.getSession()
+                .getServletContext());
+        multipartResolver.setDefaultEncoding("utf-8");
+        MultipartFile multipartFile;
+        // 检查form中是否有enctype="multipart/form-data"
+        if (!multipartResolver.isMultipart(request))
+        {
+            return new ResultJson().paramError("授权文件为空");
+        }
+        // 将request变成多部分request
+        MultipartHttpServletRequest multiRequest = (MultipartHttpServletRequest) request;
+        // 获取multiRequest 中所有的文件名
+        multipartFile = multiRequest.getFile("file");
+        if (multipartFile == null)
+        {
+            return new ResultJson().paramError("授权文件为空");
+        }
+        String fileMd5;
+        try
+        {
+            InputStream inputStream = multipartFile.getInputStream();
+            fileMd5 = DigestUtils.md5Hex(inputStream);
+        }
+        catch (IOException e)
+        {
+            logger.error("文件读取异常", e);
+            return new ResultJson().error("文件读取异常");
+        }
+
+        List<DunNumberQueryRecord> oldRecordList = dunNumberQueryRecordService.searchByFileMd5(fileMd5);
+        String fileAbsolutePath;
+        if (oldRecordList == null || oldRecordList.size() == 0)
+        {
+
+            Calendar calendar = Calendar.getInstance();
+            String filePath = tempFilePath + calendar.get(Calendar.YEAR) + "/" + (calendar.get(Calendar.MONTH) + 1)
+                    + "/" + calendar.get(Calendar.DAY_OF_MONTH);
+            String suffix = multipartFile.getOriginalFilename().substring(
+                    multipartFile.getOriginalFilename().lastIndexOf("."));
+            String fileName = TimeUtil.format(calendar.getTime(), "yyyyMMddHHmmssSSS") + suffix;
+            File destFile = new File(filePath);
+            if (!destFile.exists())
+            {
+                boolean mkdirs = destFile.mkdirs();
+            }
+            try
+            {
+                File file = new File(destFile.getAbsolutePath() + "/" + fileName);
+                multipartFile.transferTo(file);
+                fileAbsolutePath = file.getAbsolutePath();
+            }
+            catch (IOException e)
+            {
+                logger.error("保存文件异常", e);
+                return new ResultJson().error();
+            }
+        }
+        else
+        {
+            fileAbsolutePath = oldRecordList.get(0).getAuthFile();
+        }
+        try
+        {
+            Date now = new Date();
+            DunNumberQueryRecord record = new DunNumberQueryRecord();
+            record.setAuthFile(fileAbsolutePath);
+            record.setAuthStatus(0);
+            record.setQueryPhone(phone);
+            record.setContactPhone(contactPhone);
+            record.setCreateDate(now);
+            record.setUpdateDate(now);
+            record.setFileMd5(fileMd5);
+            dunNumberQueryRecordService.save(record);
+        }
+        catch (Exception e)
+        {
+            logger.error("保存提交信息异常", e);
+            return new ResultJson().error();
+        }
+        return new ResultJson().success();
+    }
+
+    private static Map<Integer, String> MAP = new HashMap<>();
+    private static List<Integer> LIST = new ArrayList<>();
+
+    static {
+        LIST.add(1);
+        LIST.add(2);
+        LIST.add(3);
+        LIST.add(4);
+        LIST.add(5);
+        LIST.add(6);
+        LIST.add(7);
+        LIST.add(8);
+        LIST.add(9);
+        LIST.add(10);
+        LIST.add(11);
+        LIST.add(12);
+        LIST.add(13);
+        LIST.add(14);
+        LIST.add(15);
+        LIST.add(16);
+        LIST.add(17);
+        LIST.add(18);
+        LIST.add(19);
+        LIST.add(20);
+        LIST.add(21);
+        LIST.add(22);
+        LIST.add(23);
+        LIST.add(24);
+        LIST.add(25);
+        LIST.add(26);
+        LIST.add(27);
+        LIST.add(28);
+        LIST.add(29);
+        LIST.add(30);
+        LIST.add(31);
+        MAP.put(1,"上海");
+        MAP.put(2,"云南");
+        MAP.put(3,"内蒙古");
+        MAP.put(4,"北京");
+        MAP.put(5,"吉林");
+        MAP.put(6,"四川");
+        MAP.put(7,"天津");
+        MAP.put(8,"宁夏");
+        MAP.put(9,"安徽");
+        MAP.put(10,"山东");
+        MAP.put(11,"山西");
+        MAP.put(12,"广东");
+        MAP.put(13,"广西");
+        MAP.put(14,"新疆");
+        MAP.put(15,"江苏");
+        MAP.put(16,"江西");
+        MAP.put(17,"河北");
+        MAP.put(18,"河南");
+        MAP.put(19,"浙江");
+        MAP.put(20,"海南");
+        MAP.put(21,"湖北");
+        MAP.put(22,"湖南");
+        MAP.put(23,"甘肃");
+        MAP.put(24,"福建");
+        MAP.put(25,"西藏");
+        MAP.put(26,"贵州");
+        MAP.put(27,"辽宁");
+        MAP.put(28,"重庆");
+        MAP.put(29,"陕西");
+        MAP.put(30,"青海");
+        MAP.put(31,"黑龙江");
+    }
+
+    @Resource
+    private DunNumberDistService dunNumberDistService;
+
+    @RequestMapping(value = "/dist", method = RequestMethod.POST)
+    @ResponseBody
+    public ResultJson numberDistData()
+    {
+        final Integer MAX_ID = 930;
+        final Integer MIN_ID= 1;
+        final Integer SHOW_NUM= 7;
+        try
+        {
+            List<DunNumberCount> numberCountList = dunNumberCountService.searchAll();
+            long findPerAddNum = 0l;
+            long coverPerAddNum = 0l;
+            Map<String, Long> result = new HashMap<>();
+            for (DunNumberCount numberCount : numberCountList)
+            {
+                if (numberCount.getType().equals(DunNumberCount.FIND_COUNT))
+                {
+                    findPerAddNum = numberCount.getPerAddCount();
+                    result.put(DunNumberCount.FIND_COUNT, numberCount.getCount());
+                }
+                if (numberCount.getType().equals(DunNumberCount.COVERAGE_COUNT))
+                {
+                    coverPerAddNum = numberCount.getPerAddCount();
+                    result.put(DunNumberCount.COVERAGE_COUNT, numberCount.getCount());
+                }
+            }
+            List<Integer> fromCount = new ArrayList<>(RandomUtil.genRandomNumber(1, 31, findPerAddNum));
+            List<Integer> copyList = new ArrayList<>(LIST);
+            copyList.removeAll(fromCount);
+            List<String> toProvinces = new ArrayList<>();
+            List<String> fromProvinces = new ArrayList<>();
+            for (Integer aFromCount : fromCount)
+            {
+                fromProvinces.add(MAP.get(aFromCount));
+            }
+            for(int i=0;i<coverPerAddNum;i++)
+            {
+                toProvinces.add(MAP.get(copyList.get(RandomUtil.genRandomNumber(1,copyList.size()))));
+            }
+//            List<DunNumberDist> dunNumberDists = DunNumberDistCache.getInstance().getDunNumberDist(idList);
+            List<DunNumberDist> dunNumberDists = dunNumberDistService.searchRandomDist(fromProvinces, toProvinces);
+            List<List<DunNumberDistModel>> dunNumberDistModelsTotal = Lists.newArrayList();
+            for (DunNumberDist dunNumberDist:dunNumberDists)
+            {
+                List<DunNumberDistModel> dunNumberDistModels = new ArrayList<>();
+                DunNumberDistModel dunNumberDistModelFrom = new DunNumberDistModel();
+                DunNumberDistModel dunNumberDistModelTo = new DunNumberDistModel();
+                dunNumberDistModelTo.setName(dunNumberDist.getUserPhoneProvince());
+                dunNumberDistModelTo.setValue(0);
+                dunNumberDistModelFrom.setName(dunNumberDist.getCallFromProvince());
+                dunNumberDistModelFrom.setValue(dunNumberDist.getFromProvinceNumber());
+                dunNumberDistModels.add(dunNumberDistModelFrom);
+                dunNumberDistModels.add(dunNumberDistModelTo);
+                dunNumberDistModelsTotal.add(dunNumberDistModels);
+            }
+            Map<String,Object> map=new HashedMap();
+            map.put("result", result);
+            map.put("dunNumberDistModelsTotal", dunNumberDistModelsTotal);
+            return new ResultJson().success(map);
+        } catch (Exception e)
+        {
+            logger.error("查询催收号码热点分布图数据失败", e);
+            return new ResultJson().error();
+        }
+    }
+
+    @RequestMapping(value = "/dist", method = RequestMethod.GET)
+    public String numberDist()
+    {
+        return "dun/dist";
+    }
+
+}

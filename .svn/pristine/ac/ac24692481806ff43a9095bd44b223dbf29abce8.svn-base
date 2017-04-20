@@ -1,0 +1,6 @@
+host=http://admin.atmpx.com
+encry.license=MdEyisAtErGJSiwhbE9NCw==
+sms.upload.total=10000
+sms.upload.url=http://192.168.108.103:5000/sms/parse
+structured.url.prefix=http://192.168.108.103:5000/sms/task/
+structured.url.suffix=/json

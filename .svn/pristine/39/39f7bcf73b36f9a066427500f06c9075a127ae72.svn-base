@@ -1,0 +1,58 @@
+package com.credit.config;
+
+import com.credit.common.context.PropertyFactory;
+
+/**
+ * Created by wangjunling on 2017/3/17.
+ */
+public class CallDetailsCfg extends BaseCfg
+{
+    private static String CALL_PERIODIC = "call.details.periodic";
+
+    private static String CALL_FREQUENCY_HIGH = "call.details.frequency.high";
+
+    private static String CALL_FREQUENCY_LOW = "call.details.frequency.low";
+    
+    private static String ACTIVE_CUTOFF_POINT = "active.cutoff.point";
+
+    private static String NORMAL_CUTOFF_POINT = "normal.cutoff.point";
+
+    private static String STABILITY_CUTOFF_POINT = "stability.cutoff.point";
+
+    public static Integer getCallFrequencyLow()
+    {
+        String property = PropertyFactory.getProperty(CALL_FREQUENCY_LOW);
+        return castToInteger(property);
+    }
+
+    public static Integer getCallFrequencyHigh()
+    {
+        String property = PropertyFactory.getProperty(CALL_FREQUENCY_HIGH);
+		return castToInteger(property);
+    }
+
+    public static Double getCallPeriodic()
+    {
+        String property = PropertyFactory.getProperty(CALL_PERIODIC);
+		return castToDouble(property);
+    }
+
+    public static Double getAcitveCutOffPoint()
+    {
+        String property = PropertyFactory.getProperty(ACTIVE_CUTOFF_POINT);
+		return castToDouble(property);
+    }
+
+    public static Double getNormalCutOffPoint()
+    {
+        String property = PropertyFactory.getProperty(NORMAL_CUTOFF_POINT);
+		return castToDouble(property);
+    }
+
+    public static Double getStabilityCutOffPoint()
+    {
+        String property = PropertyFactory.getProperty(STABILITY_CUTOFF_POINT);
+        return castToDouble(property);
+    }
+
+}

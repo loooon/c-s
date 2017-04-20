@@ -1,0 +1,124 @@
+package com.credit.web.util;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class MatchPhoneUtil
+{
+
+    private static final Pattern PHONE_PATTERN = Pattern
+            .compile("\\d*1(3[0-9]|4[57]|5[0-35-9]|7[0135678]|8[0-9])\\d{8}$");
+
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("^\\d$");
+
+    /**
+     * 格式化电话号码，包括手机号码
+     */
+    public static String formatNumber(String number) throws Exception
+    {
+        if (number == null || number.trim().length() == 0)
+        {
+            return null;
+        }
+
+        char[] numberChars = number.trim().toCharArray();
+        String tagNumber = "";
+        Matcher matcher = null;
+        for (char numberchar : numberChars)
+        {
+            matcher = NUMBER_PATTERN.matcher(String.valueOf(numberchar).trim());
+            if (matcher.find())
+            {
+                tagNumber += String.valueOf(numberchar).trim();
+            }
+        }
+
+        if (tagNumber.length() == 0)
+        {
+            throw new Exception("无效号码[" + number + "]");
+        }
+        matcher = PHONE_PATTERN.matcher(tagNumber);
+        if (matcher.find())
+        {
+            return tagNumber.substring(tagNumber.length() - 11);
+        }
+        if (tagNumber.startsWith("00"))
+        {
+            return tagNumber.substring(1);
+        }
+        if (tagNumber.startsWith("400"))
+        {
+            return tagNumber;
+        }
+        if (tagNumber.length() > 8 && !tagNumber.startsWith("0"))
+        {
+            return "0" + tagNumber;
+        }
+        return tagNumber;
+    }
+
+    public static List<String> match(List<String> lines)
+    {
+
+        if (lines == null || lines.size() == 0)
+        {
+            return null;
+        }
+        List<String> numberList = new ArrayList<>();
+        Pattern pattern = Pattern.compile("\\D(\\d+)\\D");
+        for (String line : lines)
+        {
+            line = line.replaceAll("\\(", "");
+            line = line.replaceAll("\\)", "");
+            line = line.replaceAll("（", "");
+            line = line.replaceAll("）", "");
+            line = line.replaceAll("\\+", "");
+            line = line.replaceAll("\\-", "");
+            Matcher matcher = pattern.matcher(line);
+            while (matcher.find())
+            {
+                try
+                {
+                    String s = formatNumber(matcher.group(1));
+                    if (s != null)
+                    {
+                        numberList.add(s);
+                    }
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return numberList;
+
+    }
+
+    public static void main(String[] args)
+    {
+        String line = "%%%%%%%%%%%333333333333333-33333@EEEEEEEEEEEE+8618626636645范德萨六块腹肌阿卡丽大姐夫爱打飞机离开";
+        Pattern pattern = Pattern.compile("\\D(\\d+)\\D");
+
+        line = line.replaceAll("\\(", "");
+        line = line.replaceAll("\\)", "");
+        line = line.replaceAll("（", "");
+        line = line.replaceAll("）", "");
+        line = line.replaceAll("\\+", "");
+        line = line.replaceAll("\\-", "");
+        Matcher matcher = pattern.matcher(line);
+        while (matcher.find())
+        {
+            try
+            {
+                System.out.println(formatNumber(matcher.group(1)));
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+}

@@ -1,0 +1,38 @@
+<%--
+  Created by IntelliJ IDEA.
+  User: Michael Chan
+  Date: 3/8/2017
+  Time: 12:29 PM
+  To change this template use File | Settings | File Templates.
+--%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<div class="m-title">
+    <p class="m-title-t1">充值记录</p>
+</div>
+<div class="m-content">
+    <div class="charge-content">
+        <table class="table-style1">
+            <tr class="tb-head">
+                <th class="tb-width1">充值时间</th>
+                <th class="tb-width2">充值金额</th>
+                <th class="tb-width3">状态</th>
+            </tr>
+
+            <tr>
+                <td>2017-03</td>
+                <td class="c-orange">666 元</td>
+                <td>1</td>
+            </tr>
+
+
+        </table>
+        <div class="pagination">
+
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/resources/js/user/ChargeHistory.js"></script>
+<script>
+    var chargehistory = new Credit.User.ChargeHistory();
+    chargehistory.init();
+</script>

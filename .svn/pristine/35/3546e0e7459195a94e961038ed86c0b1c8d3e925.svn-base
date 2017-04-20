@@ -1,0 +1,121 @@
+package utn.uzj.config;
+
+import utn.cfg.ConfigObj;
+import utn.cfg.store.IConfigStore;
+import utn.util.file.FileUtil;
+import utn.uzj.AppContext;
+
+public class MailCfg extends ConfigObj
+{
+    
+    private static final long serialVersionUID = 01L;
+    
+    public String mailHost;
+    public String mailSender;
+    public String mailSenderPassword;
+    public String mailFrom;
+    public String mailName = "ȫ����С��ҵ���ò�ѯ";
+    public String ucssite = "http://" + SysCfg.getInstance().domain + "/";
+    
+    public String resetTemplateFile;
+    public String resetUrl;
+    
+    public String bindingTemplateFile;
+    public String bindingUrl;
+    
+    public String registTemplateFile;
+    public String quickRegistTemplateFile;
+    public String registUrl;
+    public String quickRegistUrl;
+    public String templateTitle = "之江信用";
+    
+    public String authorizationTemplateFile;
+    
+    public String transprotDepTemplateFile;
+    public String transprotDepMail;
+    
+    public String applyAuthorizationTemplateFile;
+    
+    private static MailCfg instance = new MailCfg();
+    
+
+    private MailCfg() 
+    {
+        init();
+    }
+
+    public static MailCfg getInstance()
+    {
+        return instance;
+    }
+    
+    protected IConfigStore getCfgStore()
+    {
+        return AppContext.getDefaultConfigStore();
+    }
+    
+    public void verifyConfig() throws Exception 
+    {
+
+    }
+    public String getQuickRegistUrl()
+    {
+        return quickRegistUrl;
+    }
+
+    public String getResetTemplateFile() 
+    {
+        String confPath = FileUtil.join(AppContext.getAppRoot(), "WEB-INF/conf");
+        return FileUtil.join(confPath, resetTemplateFile);
+    }
+
+    public String getResetUrl() 
+    {
+        return String.format("%s", resetUrl);
+    }
+    
+    public String getBindingTemplateFile() 
+    {
+        String confPath = FileUtil.join(AppContext.getAppRoot(), "WEB-INF/conf");
+        return FileUtil.join(confPath, bindingTemplateFile);
+    }
+
+    public String getBindingUrl() 
+    {
+        return String.format("%s", bindingUrl);
+    }
+    
+    public String getRegistTemplateFile() 
+    {
+        String confPath = FileUtil.join(AppContext.getAppRoot(), "WEB-INF/conf");
+        return FileUtil.join(confPath, registTemplateFile);
+    }
+    public String getAuthorizationTemplateFile() 
+    {
+        String confPath = FileUtil.join(AppContext.getAppRoot(), "WEB-INF/conf");
+        return FileUtil.join(confPath, authorizationTemplateFile);
+    }
+    
+    public String getTransprotDepTemplateFile() 
+    {
+        String confPath = FileUtil.join(AppContext.getAppRoot(), "WEB-INF/conf");
+        return FileUtil.join(confPath, transprotDepTemplateFile);
+    }
+    
+    public String getQuickRegistTemplateFile() 
+    {
+        String confPath = FileUtil.join(AppContext.getAppRoot(), "WEB-INF/conf");
+        return FileUtil.join(confPath, quickRegistTemplateFile);
+    }
+
+    public String getRegistUrl() 
+    {
+        return String.format("%s", registUrl);
+    }
+
+    public String getApplyAuthorizationTemplateFile()
+    {
+        String confPath = FileUtil.join(AppContext.getAppRoot(), "WEB-INF/conf");
+        return FileUtil.join(confPath, applyAuthorizationTemplateFile);
+    }
+}

@@ -1,0 +1,213 @@
+package com.credit.service.cache;
+
+import com.credit.entity.DemandType;
+import com.credit.entity.OrganizationType;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.spi.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.credit.common.cache.ICache;
+import com.credit.common.exception.ServiceException;
+import com.credit.common.util.security.DigestUtils;
+import com.credit.entity.NumberTag;
+import com.credit.service.NumberTagService;
+import com.pingansec.upc.letksir.CLetksir;
+
+/**
+ * Created by Michael Chan on 3/9/2017.
+ */
+public class NumberTagCache
+{
+    private static final Logger logger = LoggerFactory.getLogger(NumberTagCache.class);
+
+    static {
+        try {
+            CLetksir.instance().load();
+        }catch (Exception e) {
+            logger.error("初始化控件失败:", e);
+        }
+    }
+
+    private static final String NUMBER_TAG_SERVICE_NAME = "numberTagService";
+
+    private NumberTagService<NumberTag> numberTagService;
+
+    private ICache<String, NumberTag> cache;
+//
+//    private NumberTagCache()
+//    {
+//        try
+//        {
+//            numberTagService = BeanFactory.getBean(NUMBER_TAG_SERVICE_NAME, NumberTagServiceImpl.class);
+//        }
+//        catch (Exception e)
+//        {
+//            numberTagService = null;
+//            logger.error("初始化号码标签信息失败!", e);
+//        }
+//
+//        try
+//        {
+//            cache = CacheFactory.getInstance().newCache(30, TimeUnit.DAYS, 5000000);
+//        }
+//        catch (Exception e)
+//        {
+//            cache = null;
+//            logger.error("初始化号码标签信息失败!", e);
+//        }
+//    }
+//
+    private static class NumberTagHolder
+    {
+        private static final NumberTagCache instance = new NumberTagCache();
+    }
+
+    public static NumberTagCache getInstance()
+    {
+        return NumberTagCache.NumberTagHolder.instance;
+    }
+//
+    public void reloadAll() throws ServiceException
+    {
+
+//        if (null == numberTagService)
+//        {
+//            logger.error("初始化号码标签信息失败!");
+//            return;
+//        }
+
+//        List<NumberTag> numberTags = numberTagService.searchAll();
+
+//        reloadAll(numberTags);
+    }
+//
+//    public void reloadAll(List<NumberTag> numberTagList) throws ServiceException
+//    {
+//        try
+//        {
+//            cache.invalidAllCache();
+//            if (null != numberTagList)
+//            {
+//                logger.info("共查询到" + numberTagList.size() + "条号码标记");
+//                for (NumberTag numberTag : numberTagList)
+//                {
+//                    if (numberTag.getNumber() != null)
+//                    {
+//                        cache.cache(numberTag.getNumber(), numberTag);
+//                    }
+//                }
+//                logger.info("共缓存" + cache.size() + "条号码标记");
+//            }
+//            else
+//            {
+//                logger.info("未查询到号码标记数据");
+//            }
+//        }
+//        catch (Exception e)
+//        {
+//            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "重新加载号码标签信息失败", e);
+//        }
+//    }
+//    public NumberTag getNumberTagCacheData(String number) throws ServiceException
+//    {
+//        if (StringUtils.isBlank(number))
+//        {
+//            return null;
+//        }
+//        try
+//        {
+//            if (cache.size() == 0)
+//            {
+//                reloadAll();
+//            }
+//            return cache.get(DigestUtils.md5(("95527434289645878037" + number).getBytes()));
+//        }
+//        catch (Exception e)
+//        {
+//            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "从缓存中加载号码标签信息失败", e);
+//        }
+//    }
+
+
+
+    public NumberTag getNumberTagCacheData(String number) throws ServiceException
+    {
+        if (StringUtils.isBlank(number))
+        {
+            return null;
+        }
+		
+		String tagInfo = null;
+        try
+        {
+			try{
+				tagInfo = CLetksir.instance().findTel(DigestUtils.md5(("95527434289645878037" + number).getBytes()));
+			} catch(Exception e) {
+				logger.error("调用控件失败(" + number + "):", e);
+			}
+            
+			if(StringUtils.isBlank(tagInfo)) {
+                return null;
+            }
+			
+            //number_type,org_name,org_type,org_type_name,org_code,demand_type,demand_type_name,min_date,max_date,invalid,batch
+            String[] cols = tagInfo.split(",",-1);
+            NumberTag numberTag = new NumberTag();
+            numberTag.setNumber(number);
+            if (StringUtils.isNotBlank(cols[0]))
+            {
+                numberTag.setNumberType(Integer.valueOf(cols[0]));
+            }
+            if (StringUtils.isNotBlank(cols[1]))
+            {
+                numberTag.setOrgName(cols[1]);
+            }
+            if (StringUtils.isNotBlank(cols[2]) && StringUtils.isNotBlank(cols[3]))
+            {
+                numberTag.setOrgType(new OrganizationType(Integer.valueOf(cols[2]), cols[3]));
+            }
+            if (StringUtils.isNotBlank(cols[4]))
+            {
+                numberTag.setOrgCode(cols[4]);
+            }
+            if (StringUtils.isNotBlank(cols[5]) && StringUtils.isNotBlank(cols[6]))
+            {
+                numberTag.setDemandType(new DemandType(Integer.valueOf(cols[5]), cols[6]));
+            }
+            if (StringUtils.isNotBlank(cols[7]))
+            {
+                numberTag.setMinDate(cols[7]);
+            }
+            if (StringUtils.isNotBlank(cols[8]))
+            {
+                numberTag.setMaxDate(cols[8]);
+            }
+            if (StringUtils.isNotBlank(cols[9]))
+            {
+                numberTag.setInvalid(Integer.valueOf(cols[9]));
+            }
+            if (StringUtils.isNotBlank(cols[10]))
+            {
+                numberTag.setBatch(cols[10]);
+            }
+
+            logger.debug("通过控件调用的结果:" + tagInfo);
+            return numberTag;
+        }
+        catch (Exception e)
+        {
+			if(tagInfo != null) {
+				logger.error("控件返回结果:" + tagInfo);
+			}
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "从缓存中加载号码标签信息失败", e);
+        }
+    }
+
+    public static void main(String[] args)
+    {
+        String tagInfo = "number_type,org_name,org_type,org_type_name,org_code,demand_type,demand_type_name,,max_date,,";
+        String[] cols = tagInfo.split(",", -1);
+        System.out.println(cols.length);
+    }
+}

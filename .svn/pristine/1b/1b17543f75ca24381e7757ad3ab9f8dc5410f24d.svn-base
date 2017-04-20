@@ -1,0 +1,107 @@
+/**
+ * Created by admin on 3/22/2017.
+ */
+
+//保存
+function btnAdd() {
+    var formData = new FormData($("#query_batch_Form")[0]);
+
+    var filePath=$('#file_id').val();
+    var len =filePath.length;
+    var upload_flag=false;
+    if(len==0)
+    {
+        $("#error_message").html("请选择文件");
+    }else {
+        if(filePath.indexOf("txt")!=-1 || filePath.indexOf("csv")!=-1){
+            $("#error_message").html('上传号码文件（支持文件格式txt、csv）');
+            var arr=filePath.split('\\');
+            var fileName=arr[arr.length-1];
+            //$("#showFileName").html(fileName);
+            upload_flag = true;
+        }else{
+            $("#error_message").html('只支持文件格式txt、csv');
+            $('#file_id').val("");
+            upload_flag = false;
+        }
+
+    }
+
+    if(upload_flag)
+    {
+        //$("#error_message").html('上传号码文件（支持文件格式txt、csv）');
+        $(".apply-p").css("display",'none');
+    $.ajax({
+        url: "/dun/query/batch",
+        method: "POST",
+        data: formData,
+        dataType:'json',
+        async:true,
+        contentType: false, //必须false才会避开jQuery对 formdata 的默认处理 XMLHttpRequest会对 formdata 进行正确的处理
+        processData: false, //必须false才会自动加上正确的Content-Type
+        success: function (data) {
+            if (data.result==200) {
+                var batch_data = data.data;
+                var html = "";
+                batch_data.forEach(function (value, index, array)
+                {
+                    var src_style = "";
+                    var demand_type_name = "";
+                    var org_type_name = "";
+                    var div_class = "";
+                    if (array[index].demandType == null || array[index].demandType.demandType == null || array[index].demandType.demandType == "")
+                    {
+                        src_style = "/resources/img/dun/icon8.png";
+                        demand_type_name = "高危";
+                    }
+                    else if (array[index].demandType.demandType == 15)
+                    {
+                        src_style = "/resources/img/dun/icon5.png";
+                        org_type_name = array[index].orgType.orgTypeName;
+                        demand_type_name = array[index].demandType.demandTypeName;
+                    }
+                    else if (array[index].demandType.demandType == 10)
+                    {
+                        src_style = "/resources/img/dun/icon6.png";
+                        org_type_name = array[index].orgType.orgTypeName;
+                        demand_type_name = array[index].demandType.demandTypeName;
+                    }
+                    else
+                    {
+                        src_style = "/resources/img/dun/icon7.png";
+                        org_type_name = array[index].orgType.orgTypeName;
+                        if (org_type_name == null || org_type_name == undefined)
+                        {
+                            org_type_name = "";
+                        }
+                        else
+                        {
+                            org_type_name += '·';
+                        }
+                        demand_type_name = "普通";
+                    }
+
+                     html += '<div class="result-block"> <div class="res-left"> <img src="'+src_style+'">' +
+                        ' </div> <div class="res-right"> <h4>'+org_type_name+demand_type_name+'</h4> ' +
+                        '<h5>电话号码：'+array[index].phoneNumber+'</h5> </div> </div>';
+                });
+                $("#batch_data_div").append(html);
+            }
+            else {
+                var html = '<div class="result-block"> 没有数据 </div>';
+                $("#batch_data_div").append(html);
+            }
+        }
+    });
+
+    }
+}
+
+
+$(document).ready(function ()
+{
+    $("#upload_file").on('click',function ()
+    {
+        btnAdd();
+    });
+});

@@ -1,0 +1,83 @@
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <meta name="theme-color" content="#ffffff"> 
+	<title>申请-催收黄页</title>
+	<link href="/resources/css/dun/style.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="/resources/js/lib/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="/resources/js/lib/countUp.js"></script>
+    <script type="text/javascript" src="/resources/js/dun/dunCount.js"></script>
+    <script type="text/javascript" src="/resources/js/dun/companyApply.js"></script>
+</head>
+<body>
+	<div class="layout navbar">
+		<a href="#" class="logo">
+			<img src="/resources/img/dun/logo.png" alt="">
+		</a>
+		<ul>
+			<li><a href="/dun/search">查验催收号码</a></li>
+			<li><a href="#">看看他有没有被催收</a></li>
+			<li><a href="/dun/company">集团用户通道</a></li>
+			<li><a href="#">催收号码申诉</a></li>
+		</ul>
+	</div>
+	<div class="header01"></div>
+	<div class="number">
+		<p>凭安已发现催收号码总数<span id="dunCount">0</span>个</p>
+	</div>
+	<div class="apply-content">
+		<div class="apply-input">
+			<form id="applyForm">
+	    	<div class="apply-block">
+	    		<p><span><i>*</i>公司名称：</span><input type="text" name="companyName" id="companyName" value=""></p>
+	    		<p class="apply-p"><em id="companyNameMessage" style="display:none;"><img src="/resources/img/dun/infor.png">请输入正确的公司名称</em></p>
+	    	</div>
+	    	<div class="apply-block">
+	    		<p><span><i>*</i>联系人：</span><input type="text" name="contacts" id="contacts" value=""></p>
+	    		<p class="apply-p"><em id="contactsMessage"  style="display:none;"><img src="/resources/img/dun/infor.png">请输入正确的联系人姓名</em></p>
+	    	</div>
+	    	<div class="apply-block">
+	    		<p><span><i>*</i>手机号码：</span><input type="text" value="" name="phone" id="phone"></p>
+	    		<p class="apply-p"><em id="phoneMessage"   style="display:none;"><img src="/resources/img/dun/infor.png">请输入正确的手机号码</em></p>
+	    		
+	    	</div>	    	
+	    	<div class="apply-bot">
+	    		<div class="apply-sud">
+	    			<p class="apply-p"><em id="message" style="display: none">申请已成功</em></p>
+	    		</div>
+	    		<div class="apply-btn">
+	    			<p><input type="button" id="submitApply"  value="提交申请"></p>
+	    		</div>
+	    	</div>
+			</form>
+	    </div>
+    </div>
+	<div id="pop" class="adv res" style="display: none;position: fixed;margin-left: 25%;">
+		<img src="/resources/img/dun/mobile/sud-pop.png">
+	</div>
+	<div class="copy">
+		<p>Copyright © 2015 水滴信用网shuidixy.com 保留所有权利 沪ICP备12039960号-5</p>
+	</div>
+	<div class="side">        
+        <a href="javascript:void(0)">
+            <div class="side-pic">
+                <div class="pic"></div>
+                <div class="back"></div>
+            </div>
+        </a>
+        <a href="javascript:void(0)">
+            <div class="side-pic01">
+                <div class="pic01"></div>
+                <div class="back01"></div>
+            </div>
+        </a>
+   </div>    
+</body>
+</html>

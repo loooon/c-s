@@ -1,0 +1,56 @@
+
+$().ready(function () {
+    $("#batch").click(function () {
+        malert($("#pop2"),null,{});
+    });
+    $("#submitApply").click(function () {
+        $("#message").hide();
+        $("#phoneMessage,#companyNameMessage,#contactsMessage").hide();
+        $("#applyForm").find('input').each(function(){
+            $(this).val($.trim($(this).val()));
+        });
+        var companyName = $("#companyName").val();
+        if(companyName == ''){
+            $("#companyNameMessage").show();
+            return;
+        }
+        var contacts = $("#contacts").val();
+        if(contacts == ''){
+            $("#contactsMessage").show();
+            return;
+        }
+        var duty = $("#duty").val();
+        if(duty == '')
+        {
+            $("#dutyMessage").show();
+            return;
+        }
+
+        var phone = $("#phone").val();
+        if(phone == ''||(!phone.isMobile()&&!phone.isPhone()))
+        {
+            $("#phoneMessage").show();
+            return;
+        }
+        var values = $("#applyForm").serializeArray();
+        $.ajax({
+            dataType: 'json',
+            data: values,
+            type: 'post',
+            url: '/dun/company',
+            success: function(data, r, xhr) {
+                if (data.result == 0) {
+                    malert($(".pop"),$("a,input"),{timeout:3000});
+                    $("#companyName").val("");
+                    $("#contacts").val("");
+                    $("#phone").val("");
+                    $("#duty").val("");
+                } else {
+                    $('#message').text(data.message);
+                }
+            }
+        });
+    });
+});
+
+

@@ -1,0 +1,170 @@
+package com.credit.entity;
+
+import javax.persistence.*;
+import java.util.Date;
+
+/**
+ * Created by wangjunling on 2017/3/7.
+ */
+@Entity
+@Table(name = "tb_user")
+public class User
+{
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "user_id")
+    private Integer userId;
+
+    @Column(name = "user_no")
+    private String userNo;
+
+    @Column(name = "vkey")
+    private String vKey;
+
+    @Column(name = "user_name")
+    private String userName;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "user_nickname")
+    private String userNickName;
+
+    @Column(name = "password")
+    private String password;
+
+    @Column(name = "reg_time")
+    private Date regTime;
+
+    @Column(name = "visits")
+    private Integer visits;
+
+    @Column(name = "last_logintime")
+    private Date lastLoginTime;
+
+    @Column(name = "user_type")
+    private Integer userType;
+
+    @Column(name = "phone")
+    private String phone;
+
+    public Integer getUserId()
+    {
+        return userId;
+    }
+
+    public void setUserId(Integer userId)
+    {
+        this.userId = userId;
+    }
+
+    public String getUserNo()
+    {
+        return userNo;
+    }
+
+    public void setUserNo(String userNo)
+    {
+        this.userNo = userNo;
+    }
+
+    public String getvKey()
+    {
+        return vKey;
+    }
+
+    public void setvKey(String vKey)
+    {
+        this.vKey = vKey;
+    }
+
+    public String getUserName()
+    {
+        return userName;
+    }
+
+    public void setUserName(String userName)
+    {
+        this.userName = userName;
+    }
+
+    public String getEmail()
+    {
+        return email;
+    }
+
+    public void setEmail(String email)
+    {
+        this.email = email;
+    }
+
+    public String getUserNickName()
+    {
+        return userNickName;
+    }
+
+    public void setUserNickName(String userNickName)
+    {
+        this.userNickName = userNickName;
+    }
+
+    public String getPassword()
+    {
+        return password;
+    }
+
+    public void setPassword(String password)
+    {
+        this.password = password;
+    }
+
+    public Date getRegTime()
+    {
+        return regTime;
+    }
+
+    public void setRegTime(Date regTime)
+    {
+        this.regTime = regTime;
+    }
+
+    public Integer getVisits()
+    {
+        return visits;
+    }
+
+    public void setVisits(Integer visits)
+    {
+        this.visits = visits;
+    }
+
+    public Date getLastLoginTime()
+    {
+        return lastLoginTime;
+    }
+
+    public void setLastLoginTime(Date lastLoginTime)
+    {
+        this.lastLoginTime = lastLoginTime;
+    }
+
+    public Integer getUserType()
+    {
+        return userType;
+    }
+
+    public void setUserType(Integer userType)
+    {
+        this.userType = userType;
+    }
+
+    public String getPhone()
+    {
+        return phone;
+    }
+
+    public void setPhone(String phone)
+    {
+        this.phone = phone;
+    }
+}

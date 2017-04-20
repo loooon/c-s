@@ -1,0 +1,78 @@
+<%--
+  Created by IntelliJ IDEA.
+  User: Michael Chan
+  Date: 3/8/2017
+  Time: 10:40 AM
+  To change this template use File | Settings | File Templates.
+--%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+
+<div class="m-title">
+    <p class="m-title-t1">累计数据</p>
+    <p class="m-title-t2"> 2016-10-20 至 2017-03-06</p>
+</div>
+<div class="m-content">
+    <div class="m-content-b">
+        <div class="c-left4">
+            <div class="c-all">
+                       <span>
+                           <p class="t1">0</p>
+                           <p class="t2">查询次数</p>
+                       </span>
+            </div>
+        </div>
+        <div class="c-right4">
+            <div class="c-items clearfix">
+                <ul>
+                    <li>
+                        <div class="c-item">
+                            <p class="t3">0</p>
+                            <p class="t4">命中次数<span>0%</span></p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+<div class="m-title clearfix">
+    <div class="m-title-left">数据记录</div>
+    <div class="m-title-right">
+        <ul class="all-time">
+            <li class="appoint-t" id="datetimepicker">指定</li>
+            <li class="yesterday-date current">昨天</li>
+            <li class="before-date">前天</li>
+        </ul>
+        <div class="date-picker">
+            <div id="datepickerStart" class="hasDatepicker"></div>
+        </div>
+    </div>
+</div>
+<div class="m-content m-chart-bg">
+    <div class="m-chart" id="mchart" _echarts_instance_="1488866960365"
+         style="-webkit-tap-highlight-color: transparent; user-select: none; background-color: rgba(0, 0, 0, 0);">
+        <div style="position: relative; overflow: hidden; width: 1597px; height: 400px;">
+            <div data-zr-dom-id="bg" class="zr-element"
+                 style="position: absolute; left: 0px; top: 0px; width: 1597px; height: 400px; user-select: none;"></div>
+            <canvas width="1597" height="400" data-zr-dom-id="0" class="zr-element"
+                    style="position: absolute; left: 0px; top: 0px; width: 1597px; height: 400px; user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></canvas>
+            <canvas width="1597" height="400" data-zr-dom-id="1" class="zr-element"
+                    style="position: absolute; left: 0px; top: 0px; width: 1597px; height: 400px; user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></canvas>
+            <canvas width="1597" height="400" data-zr-dom-id="_zrender_hover_" class="zr-element"
+                    style="position: absolute; left: 0px; top: 0px; width: 1597px; height: 400px; user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    var creditFrame = new CreditFrame();
+    creditFrame.init();
+</script>
+<script>
+    var index = new Credit.User.Index();
+    index.setChartData({"title": [], "data": []});
+    index.setOverviewData({"hit_success": {"title": "\u547d\u4e2d\u6b21\u6570", "data": "0", "rate": "0%"}});
+    index.init();
+</script>

@@ -1,0 +1,116 @@
+<%--
+  Created by IntelliJ IDEA.
+  User: Michael Chan
+  Date: 3/8/2017
+  Time: 11:48 AM
+  To change this template use File | Settings | File Templates.
+--%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<div class="m-title clearfix">
+    <div class="m-title-left">查询记录</div>
+    <div class="m-title-right"><p class="m-title-t3">清空查询记录</p></div>
+</div>
+<div class="m-nav">
+    <ul>
+        <li class="current">身份证实名验证</li>
+        <li>银行卡实名认证</li>
+        <!--                    <li>电话信息查询</li>-->
+        <!--                    <li>信贷综合查询</li>-->
+        <!--                    <li>授权文件状态查询</li>-->
+    </ul>
+</div>
+<div class="m-content id-verify">
+    <div class="m-content-b search-content clearfix">
+        <div class="c-left3">
+            <form id="id_check" action="/user/personal/?action=id_check" method="post">
+                <div class="c-left3-content">
+                    <p><label>身份证</label> <input type="id" class="input-type3" notnul="ture" ajaxmsg="*身份证不为空" msgtip="innerLeft" maxlength="18" name="id_card" des="*身份证" placeholder="请输入身份证号码" autocomplete="off"/></p>
+                    <p><label>姓名</label> <input type="text" class="input-type3" notnul="ture" ajaxmsg="*姓名不为空" msgtip="innerLeft" name="real_name"  placeholder="被查询用户的姓名" autocomplete="off"/></p>
+                    <p class="s-list">
+                        <label>查询类型</label>
+                        <span class="select-click">
+                                    <a href="javascript:void(0)" class="select-switch">
+                                        <img src="${basePath}/resources/img/user/list_icon.png">
+                                    </a>
+                                    <input type="text" class="input-type4" id="select-type" placeholder="基本查询" autocomplete="off" disabled="disabled"/>
+                                    <input type="text" class="dis-none" id="select-type-none" name="license_type"  value="0" autocomplete="off" />
+                                        </span>
+                    </p>
+                    <div class="input-select">
+                        <ul>
+
+                            <li code="1">li_test</li>
+
+                        </ul>
+                    </div>
+                    <p class="s-bottom">
+                        <button type="submit" class="custombtn2">搜索</button>
+                    </p>
+                </div>
+            </form>
+        </div>
+        <div class="c-right3">
+            <div class="default"><p><label>查询结果</label></p></div>
+            <div class="loading">
+                <p><span class="limg"></span><label>查询中...</label></p>
+            </div>
+            <div class="no-result">
+                <p><label>查询失败</label></p>
+            </div>
+            <div class="result">
+                <div class="result-off">
+                    <p><label>状态</label><span class="c-orange">银行卡信息与姓名不一致</span></p>
+                </div>
+                <div class="result-on">
+                    <p class="ty1"><label>状态</label><span class="c-orange">银行卡信息与姓名一致</span></p>
+                    <p class="ty2"><label>地址</label><span class="c-orange">上海市闵行区航华四村</span></p>
+                    <p class="ty3"><label>照片</label><span class="img-show"><img src="${basePath}/resources/img/user/photo.jpg"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="m-content card-verify">
+    <div class="m-content-b search-content clearfix">
+        <div class="c-left3">
+            <form id="card_check" action="/user/personal/?action=check_bank_card" method="post">
+
+                <div class="c-left3-content">
+                    <p><label>证件类型</label><span class="select-click"><a href="javascript:void(0)" class="select-switch-d"><img src="${basePath}/resources/img/user/list_icon.png"></a><input type="text" class="input-type4" id="select-type-d" placeholder="居民身份证" disabled="disabled" autocomplete="off"/><input type="text" class="dis-none" id="select-type-d-none" value="111" name="idType" autocomplete="off"/></span></p>
+                    <p><label>证件号码</label> <input type="text" class="input-type3" notnul="ture" ajaxmsg="*证件号不为空" msgtip="innerLeft"  name="idCard" placeholder="请输入身份证号码" autocomplete="off"/></p>
+                    <p><label>姓名</label> <input type="text" class="input-type3" notnul="ture" ajaxmsg="*姓名不为空" msgtip="innerLeft"  name="name" placeholder="被查询用户的姓名" autocomplete="off"/></p>
+                    <p><label>银行卡号</label> <input type="text" class="input-type3" notnul="ture" ajaxmsg="*银行卡不为空" msgtip="innerLeft"  name="card" placeholder="被查询的银行卡号"/></p>
+                    <p class="s-bottom">
+                        <button type="submit" class="custombtn2">搜索</button>
+                    </p>
+                    <div class="input-select-d">
+                        <ul>
+
+                            <li code="2">li_test2</li>
+
+                        </ul>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+        <div class="c-right3">
+            <div class="default"><p><label>查询结果</label><span></span></p></div>
+            <div class="loading">
+                <p><span class="limg"></span><label>查询中...</label></p>
+            </div>
+            <div class="no-result"><label>查询失败</label></div>
+            <div class="result"><p><label>状态</label><span class="c-orange">银行卡信息与姓名不一致</span></p></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var creditFrame = new CreditFrame();
+    creditFrame.init();
+</script>
+<script>
+    var personal = new Credit.User.Personal();
+    personal.init();
+</script>

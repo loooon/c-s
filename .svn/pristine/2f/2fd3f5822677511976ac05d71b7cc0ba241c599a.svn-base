@@ -1,0 +1,43 @@
+package com.credit.web.model;
+
+/**
+ * Created by wangjunling on 2017/3/13.
+ */
+public class GrayscaleModel
+{
+    private BasicInfo basicInfo = new BasicInfo();
+
+    private AttributeTag attributeTag = new AttributeTag();
+
+    private TopCallOutStat mainContactTopTen = new TopCallOutStat();
+
+    public BasicInfo getBasicInfo()
+    {
+        return basicInfo;
+    }
+
+    public void setBasicInfo(BasicInfo basicInfo)
+    {
+        this.basicInfo = basicInfo;
+    }
+
+    public AttributeTag getAttributeTag()
+    {
+        return attributeTag;
+    }
+
+    public void setAttributeTag(AttributeTag attributeTag)
+    {
+        this.attributeTag = attributeTag;
+    }
+
+    public TopCallOutStat getMainContactTopTen()
+    {
+        return mainContactTopTen;
+    }
+
+    public void setMainContactTopTen(TopCallOutStat mainContactTopTen)
+    {
+        this.mainContactTopTen = mainContactTopTen;
+    }
+}

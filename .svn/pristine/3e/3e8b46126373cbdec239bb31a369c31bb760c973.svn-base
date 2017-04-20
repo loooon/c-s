@@ -1,0 +1,143 @@
+package com.credit.web.controller;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.alibaba.fastjson.JSONArray;
+import com.credit.common.exception.ServiceException;
+import com.credit.entity.CallDetails;
+import com.credit.entity.NumberTag;
+import com.credit.enumeration.CallModelEnum;
+import com.credit.service.cache.NumberTagCache;
+import com.credit.web.model.AttributeTag;
+
+import com.credit.web.model.CallDetailsModel;
+import com.credit.web.model.GrayscaleModel;
+import com.credit.web.util.GrayscaleUtil;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.credit.common.result.ResultJson;
+import com.credit.common.util.NumberFormat;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.Applicant;
+import com.credit.web.util.CallDetailUtil;
+
+/**
+ * Created by wangjunling on 2017/3/8.
+ */
+
+@Controller
+public class GrayscaleController extends AbstractBaseController
+{
+
+    private Logger logger = LoggerFactory.getLogger(GrayscaleController.class);
+
+    @RequestMapping(value = "/service", method = RequestMethod.POST, params = "t=grayscale")
+    // params多个参数params={"t=1","c=2"}
+    @ResponseBody
+    public ResultJson service(String phone, String name, String idcard, String imei, String imsi,
+            @RequestParam(name = "apply_date", required = false) String applyDateStr,
+            @RequestParam(name = "call_details", required = false) String callDetailJsonArray,
+            @RequestParam(name = "file_charset", defaultValue = "UTF-8") String fileCharset, HttpServletRequest request)
+    {
+        if (StringUtils.isBlank(phone))
+        {
+			return new ResultJson().paramError("手机号码为空");
+		}
+		if (StringUtils.isBlank(applyDateStr))
+		{
+			return new ResultJson().paramError("申请时间为空");
+		}
+		Applicant applicant = new Applicant();
+		try
+        {
+            String tagPhoneNumber = NumberFormat.formatNumber(phone);
+            if (!NumberFormat.isPhoneNumber(tagPhoneNumber))
+            {
+                logger.debug("输入申请人电话号码:" + phone + ",转换后的号码" + tagPhoneNumber);
+                return new ResultJson().paramError("申请人电话号码[" + phone + "]不正确");
+            }
+            applicant.setPhone(tagPhoneNumber);
+        }
+        catch (Exception e)
+        {
+            logger.warn("申请人电话号码[" + applicant.getPhone() + "]不正确:", e);
+            return new ResultJson().paramError("申请人电话号码[" + applicant.getPhone() + "]不正确");
+        }
+        try
+        {
+            Date applyDate = TimeUtil.parse(applyDateStr, "yyyy-MM-dd");
+            applicant.setApplyDate(applyDate);
+        }
+        catch (Exception e)
+        {
+        	logger.warn("申请时间["+applyDateStr+"]格式不正确");
+            return new ResultJson().paramError("申请时间[" + applyDateStr + "]格式不正确");
+        }
+		applicant.setIdcard(idcard);
+		applicant.setAname(name);
+		applicant.setImei(imei);
+		applicant.setImsi(imsi);
+		applicant.setQueryTime(new Date());
+		List<String> errMsgList = new ArrayList<>();
+        try
+        {
+			List<String> readCallDetailFileErrMsg = CallDetailUtil.readCallDetailFile(applicant, fileCharset, request);
+			errMsgList.addAll(readCallDetailFileErrMsg);
+		}
+        catch (Exception e)
+        {
+            logger.error("读取详单文件异常", e);
+            return new ResultJson().paramError(e.getMessage());
+        }
+        if (CollectionUtils.isEmpty(applicant.getCallDetailsList()) && StringUtils.isBlank(callDetailJsonArray))
+        {
+            return new ResultJson().paramError("详单为空");
+        }
+        try
+        {
+        	if(StringUtils.isNotBlank(callDetailJsonArray))
+        	{
+				List<String> readCallDetailJsonArrayErrMsg = CallDetailUtil.readCallDetailJsonArray(applicant, callDetailJsonArray);
+				errMsgList.addAll(readCallDetailJsonArrayErrMsg);
+			}
+		}
+        catch (Exception e)
+        {
+            logger.error("详单Json字符串转化异常", e);
+            return new ResultJson().paramError("详单参数值格式有误【必须为JSON数组字符串】");
+        }
+        if (CollectionUtils.isEmpty(applicant.getCallDetailsList()))
+        {
+        	if(CollectionUtils.isEmpty(errMsgList)){
+				return new ResultJson().paramError("申请人详单内容为空");
+			}
+        	return new ResultJson().paramError(JSONArray.toJSONString(errMsgList));
+		}
+
+		List<CallDetails> callDetailsList = applicant.getCallDetailsList();
+
+		GrayscaleModel grayscaleModel = new GrayscaleModel();
+		try {
+			GrayscaleUtil.buildGrayscaleModel(grayscaleModel,callDetailsList);
+		} catch (Exception e)
+		{
+			logger.error("详单统计错误",e.getMessage());
+		}
+		return new ResultJson().success(grayscaleModel);
+
+    }
+
+}

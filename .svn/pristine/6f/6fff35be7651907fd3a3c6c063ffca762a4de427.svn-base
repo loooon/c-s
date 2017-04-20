@@ -1,0 +1,362 @@
+package com.credit.web.util;
+
+import java.text.NumberFormat;
+import java.util.*;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.credit.common.util.IDCardUtil;
+import com.credit.common.util.MapUtil;
+import com.credit.common.util.Validator;
+import com.credit.common.util.time.TimeUtil;
+import com.credit.entity.Applicant;
+import com.credit.entity.CallDetails;
+import com.credit.entity.PhoneSegmentInfo;
+import com.credit.enumeration.CallModelEnum;
+import com.credit.enumeration.WorkEnum;
+import com.credit.service.cache.NumberTagCache;
+import com.credit.web.model.*;
+
+/**
+ * Created by wangjunling on 2017/3/10.
+ */
+public class GrayscaleUtil
+{
+	private static final Integer TOP_TEN = Integer.valueOf(10);
+
+	private static Logger logger = LoggerFactory.getLogger(GrayscaleUtil.class);
+
+    public static void buildGrayscaleModel(GrayscaleModel grayscaleModel, Applicant applicant,PhoneSegmentInfo phoneSegmentInfo) throws Exception
+    {
+    	buildBasicInfo(grayscaleModel.getBasicInfo(),applicant,phoneSegmentInfo);
+        CallDetailsModel callDetailsModel = new CallDetailsModel(applicant.getCallDetailsList());
+        buildAttributeTag(grayscaleModel.getAttributeTag(), callDetailsModel);
+        buildCallDurationStat(grayscaleModel.getCallDurationStat(), callDetailsModel);
+        buildContactArea(grayscaleModel.getContactAreaStat(), callDetailsModel);
+        buildRiskStatAndContactCheck(grayscaleModel.getRiskStat(), grayscaleModel.getContactCheck(),callDetailsModel);
+        buildTopCallOutStat(grayscaleModel.getTopCallOutStat(), callDetailsModel);
+        buildTopCallInStat(grayscaleModel.getTopCallInStat(), callDetailsModel);
+    }
+
+	public static void buildBasicInfo(BasicInfo basicInfo, Applicant applicant, PhoneSegmentInfo phoneSegmentInfo)
+	{
+		if (StringUtils.isBlank(applicant.getIdcard()))
+		{
+			basicInfo.setIdcard("");
+			basicInfo.setEffectiveIdcard("");
+			basicInfo.setAge(null);
+		}else
+			{
+				basicInfo.setIdcard(applicant.getIdcard());
+				basicInfo.setEffectiveIdcard(Validator.isCitizenId(applicant.getIdcard()) ? "有效" : "无效");
+				basicInfo.setAge(IDCardUtil.getAgeByIDCard(applicant.getIdcard()));
+			}
+		basicInfo.setUname(applicant.getAname());
+		basicInfo.setPhone(applicant.getPhone());
+		basicInfo.setOperator(phoneSegmentInfo.getOperator());
+		basicInfo.setPhoneOwnership(phoneSegmentInfo.getProvince() + phoneSegmentInfo.getCity());
+	}
+	public static void buildTopCallOutStat(List<TopCallOutStat> topCallOutStats, CallDetailsModel callDetailsModel) throws Exception
+	{
+		Map<String, Integer> contactAndTotalTimesMap = callDetailsModel.getContactAndTotalTimesMap();//包含联系电话号码 及相应的通话总次数
+		Map<String, Integer> callOutCountMap = callDetailsModel.getCallOutCount();//包含联系电话号码 及相应的主叫通话总次数
+		Map<String, Integer> callOutDurationMap = callDetailsModel.getCallOutDuration();//包含联系电话号码及相应的主叫通话总时长
+		//根据主被叫次数排序,找出top10
+        Map<String, Integer> sortedCallOutCountMapMap= MapUtil.sortByValue(callOutCountMap);
+		//主叫top10
+		topCallOutStat(callOutDurationMap,contactAndTotalTimesMap,sortedCallOutCountMapMap,topCallOutStats);
+	}
+
+	public static void buildTopCallInStat(List<TopCallInStat> topCallInStats,CallDetailsModel callDetailsModel) throws Exception
+	{
+		Map<String, Integer> contactAndTotalTimesMap = callDetailsModel.getContactAndTotalTimesMap();//包含联系电话号码 及相应的通话总次数
+		Map<String, Integer> callInCountMap = callDetailsModel.getCallInCount();
+		Map<String, Integer> callInDurationMap = callDetailsModel.getCallInDuration();
+		//根据主被叫次数排序,找出top10
+		Map<String, Integer> sortedCallInCountMapMap= MapUtil.sortByValue(callInCountMap);
+		//被叫top10
+		topCallInStat(callInDurationMap,contactAndTotalTimesMap,sortedCallInCountMapMap,topCallInStats);
+	}
+
+	private static void topCallOutStat(Map<String, Integer> durationMap,Map<String, Integer> totalTimes,Map<String, Integer> topCallOut,List<TopCallOutStat> topCallOutStats) throws Exception
+	{
+		Integer timesFlag=1;
+		for (Map.Entry<String, Integer> s : topCallOut.entrySet())
+		{
+			timesFlag++;
+			TopCallOutStat topCallOutStat = new TopCallOutStat();
+			topCallOutStat.setNumber(s.getKey());
+			topCallOutStat.setCallOutCount(s.getValue());
+			topCallOutStat.setCallOutDuration(TimeUtil.getTimeInterval(durationMap.get(s.getKey())));
+			double rate=s.getValue()*1.0/totalTimes.get(s.getKey());
+			NumberFormat numberFormat = NumberFormat.getPercentInstance();
+			numberFormat.setMinimumFractionDigits(0);
+			topCallOutStat.setCallOutRate(numberFormat.format(rate));
+			topCallOutStats.add(topCallOutStat);
+			if (timesFlag > TOP_TEN)
+			{
+				break;
+			}
+		}
+	}
+
+	private static void topCallInStat(Map<String, Integer> durationMap,Map<String, Integer> totalTimes,Map<String, Integer> topCallInData,List<TopCallInStat> topCallInStats) throws Exception
+	{
+		Integer timesFlag=1;
+		for (Map.Entry<String, Integer> s : topCallInData.entrySet())
+		{
+			timesFlag++;
+			TopCallInStat topCallInStat = new TopCallInStat();
+			topCallInStat.setNumber(s.getKey());
+			topCallInStat.setCallInCount(s.getValue());
+			topCallInStat.setCallInDuration(TimeUtil.getTimeInterval(durationMap.get(s.getKey())));
+			double rate=s.getValue()*1.0/totalTimes.get(s.getKey());
+			NumberFormat numberFormat = NumberFormat.getPercentInstance();
+			numberFormat.setMinimumFractionDigits(0);
+			topCallInStat.setCallInRate(numberFormat.format(rate));
+			topCallInStats.add(topCallInStat);
+			if (timesFlag > TOP_TEN)
+			{
+				break;
+			}
+		}
+	}
+
+	public static void buildAttributeTag(AttributeTag attributeTag, CallDetailsModel callDetailsModel)  throws Exception
+	{
+		int monthSize = callDetailsModel.getMonthSet().size();
+		//设置联系人总数
+		attributeTag.setContactCount(callDetailsModel.getContactMap().size());
+		int workDayTime = callDetailsModel.getWorkingDayCallDetailsList().size();
+		int restDayTime = callDetailsModel.getWeekendCallDetailsList().size();
+
+		//设置通话频率最高的时间段(休息日，工作日)
+		if (workDayTime >= restDayTime)
+		{
+			attributeTag.setMaxCallTimeSlot(WorkEnum.WORK_DAY.getText());
+		}
+		else
+		{
+			attributeTag.setMaxCallTimeSlot(WorkEnum.REST_DAY.getText());
+		}
+		if (monthSize>0)
+		{
+			attributeTag.setMonthAvgContactCount(callDetailsModel.getContactMap().size()/monthSize);
+			attributeTag.setMonthAvgCallCount(callDetailsModel.getCallDetailsList().size()/monthSize);
+		}
+		List<String> callTimeList = callDetailsModel.getCallTimeList();
+        if (callTimeList.size() > 0)
+		{
+			//排序
+			Collections.sort(callTimeList);
+			long[] intervals = new long[callTimeList.size()-1];
+			int index = 0;
+			int intervalCount=0;
+			//获取是呼叫时间的时间间隔 单位：秒
+			for (int i = 1; i < callTimeList.size(); i++)
+			{
+				long interval = TimeUtil.getTimeDifference(callTimeList.get(i),callTimeList.get(i - 1));
+				intervals[index++]=interval;
+				intervalCount+=interval;
+			}
+			Arrays.sort(intervals);
+			attributeTag.setMinCallTimeInterval(TimeUtil.getTimeInterval(intervals[0]));
+			attributeTag.setMaxCallTimeInterval(TimeUtil.getTimeInterval(intervals[intervals.length-1]));
+			attributeTag.setAvgCallTimeInterval(TimeUtil.getTimeInterval(intervalCount/intervals.length));
+		}
+		attributeTag.setCallOutFirstTierCitiesCount(callDetailsModel.getCallOutFirstTierCitiesCount());
+		attributeTag.setAvgDuration(callDetailsModel.getTotalDuration()/callDetailsModel.getCallDetailsList().size());
+
+		attributeTag.setFriendsCircle(callDetailsModel.getMaxContactAddr());
+	}
+
+	public static void buildContactArea(List<ContactAreaStat> contactAreaList, CallDetailsModel callDetailsModel) throws Exception
+	{
+
+        Map<String, Map<String, List<CallDetails>>> contactAddrMap = callDetailsModel.getContactAddrMap();
+		for (Map.Entry<String, Map<String, List<CallDetails>>> stringMapEntry : contactAddrMap.entrySet())
+        {
+        	if(StringUtils.isBlank(stringMapEntry.getKey()))
+        	{
+        		continue;
+			}
+			ContactAreaStat contactArea = new ContactAreaStat();
+            contactArea.setArea(stringMapEntry.getKey());
+            Map<String, List<CallDetails>> contactMap = stringMapEntry.getValue();
+            contactArea.setNumberCount(contactMap.size());
+            int callOutCount = 0;
+            int callInCount = 0;
+            int callOutDuration = 0;
+            int callInDuration = 0;
+            for (Map.Entry<String, List<CallDetails>> contactEntry : contactMap.entrySet())
+            {
+                List<CallDetails> value = contactEntry.getValue();
+                for (CallDetails details : value)
+                {
+                    if (details.getFormatCallModel().equals(CallModelEnum.CALL_OUT.getComment()))
+                    {
+                        callOutDuration += details.getDuration();
+                        callOutCount++;
+                    }
+                    else
+                        if (details.getFormatCallModel().equals(CallModelEnum.CALL_IN.getComment()))
+                        {
+                            callInDuration += details.getDuration();
+                            callInCount++;
+                        }
+                }
+            }
+            contactArea.setCallOutCount(callOutCount);
+            contactArea.setCallInCount(callInCount);
+            contactArea.setCallOutDuration(TimeUtil.getTimeInterval(callOutDuration));
+            contactArea.setCallInDuration(TimeUtil.getTimeInterval(callInDuration));
+            int callCount = callOutCount + callInCount;
+            double callOutRate = callOutCount * 1.0 / callCount;
+            double callInRate = callInCount * 1.0 / callCount;
+            contactArea.setCallOutRatio((int) (callOutRate * 100) + "%");
+            contactArea.setCallInRatio((int) (callInRate * 100) + "%");
+            contactAreaList.add(contactArea);
+        }
+	}
+
+	public static void buildRiskStatAndContactCheck(List<RiskStat> riskStatList,List<ContactCheck> contactCheckList, CallDetailsModel callDetailsModel) throws Exception
+	{
+		Map<String, List<CallDetails>> contactMap = callDetailsModel.getContactMap();
+		for (Map.Entry<String, List<CallDetails>> contactCall : contactMap.entrySet())
+		{
+			String contact = contactCall.getKey();
+			RiskStat riskStat = new RiskStat();
+			riskStat.setNumber(contact);
+			String demandType = NumberTagCache.getInstance().getDemandType(contact);
+			String orgType = NumberTagCache.getInstance().getOrgType(contact);
+//			String demandType = "互联网金融";
+//			String orgType = "催收";
+			riskStat.setDemandType(demandType);
+			riskStat.setOrgType(orgType);
+			List<CallDetails> callDetailsList = contactCall.getValue();
+			int totalDuration = 0;
+			int callOutCount = 0;
+			int callInCount = 0;
+			for (CallDetails details : callDetailsList)
+			{
+				totalDuration += details.getDuration();
+				if (details.getFormatCallModel().equals(CallModelEnum.CALL_OUT.getComment()))
+				{
+					callOutCount++;
+				}else if (details.getFormatCallModel().equals(CallModelEnum.CALL_IN.getComment())){
+					callInCount++;
+				}
+			}
+			riskStat.setCallDuration(TimeUtil.getTimeInterval(totalDuration));
+			riskStat.setCallCount(callDetailsList.size());
+			riskStat.setCallOutCount(callOutCount);
+			riskStat.setCallInCount(callInCount);
+			riskStat.setOwnership(callDetailsList.get(0).getContactAddr());
+			riskStatList.add(riskStat);
+			if(CollectionUtils.isEmpty(contactCheckList))
+			{
+				continue;
+			}
+			for (ContactCheck contactCheck : contactCheckList)
+			{
+				if(contactCheck.getNumber().equals(contact))
+				{
+					contactCheck.setCallCount(callDetailsList.size());
+					contactCheck.setCallInCount(callInCount);
+					contactCheck.setCallOutCount(callOutCount);
+				}
+			}
+		}
+	}
+
+	public static void buildCallDurationStat(CallDurationStat callDurationStat, CallDetailsModel callDetailsModel) throws Exception
+	{
+		CallDurationModel workingDay = new CallDurationModel();
+		CallDurationModel weekend = new CallDurationModel();
+		List<CallDetails> workingDayCallDetailsList = callDetailsModel.getWorkingDayCallDetailsList();
+		List<CallDetails> weekendCallDetailsList = callDetailsModel.getWeekendCallDetailsList();
+		calculateCallDuration(workingDay,workingDayCallDetailsList);
+		calculateCallDuration(weekend,weekendCallDetailsList);
+		callDurationStat.setWorkingDay(workingDay);
+		callDurationStat.setWeekend(weekend);
+	}
+
+	private static void calculateCallDuration(CallDurationModel callDurationModel,List<CallDetails> callDetailsList) throws Exception
+	{
+		int callOutCount = 0;
+		int callInCount = 0;
+		int  callOutDuration = 0;
+		int  callInDuration = 0;
+		Set<String> contactSet = new HashSet<>();
+		for (CallDetails details : callDetailsList)
+		{
+			contactSet.add(details.getContact());
+			if (details.getFormatCallModel().equals(CallModelEnum.CALL_OUT.getComment()))
+			{
+				callOutDuration+=details.getDuration();
+				callOutCount++;
+			}else if (details.getFormatCallModel().equals(CallModelEnum.CALL_IN.getComment())){
+				callInDuration+=details.getDuration();
+				callInCount++;
+			}
+		}
+		callDurationModel.setNumberCount(contactSet.size());
+		callDurationModel.setCallOutCount(callOutCount);
+		callDurationModel.setCallInCount(callInCount);
+		callDurationModel.setCallOutDuration(TimeUtil.getTimeInterval(callOutDuration));
+		callDurationModel.setCallInDuration(TimeUtil.getTimeInterval(callInDuration));
+		int callCount = callOutCount + callInCount;
+		double callOutRate = callOutCount * 1.0 / callCount;
+		double callInRate = callInCount * 1.0 / callCount;
+		callDurationModel.setCallOutRatio((int) (callOutRate * 100) + "%");
+		callDurationModel.setCallInRatio((int) (callInRate * 100) + "%");
+	}
+
+	public static void main(String[] args)
+	{
+//		String detailJson="[ { \"duration\":\"16\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-29 18:23:53\", \"call_model\":\"被叫\", \"call_addr\":\"上海\" }, { \"duration\":\"153\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"4008208788\", \"call_time\":\"2016-11-30 05:29:47\", \"call_model\":\"主叫\", \"call_addr\":\"上海\" } ]";
+//		String detailJson="[ { \"duration\":\"16\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-29 18:23:53\", \"call_model\":\"被叫\", \"call_addr\":\"上海\" }, { \"duration\":\"153\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"4008208788\", \"call_time\":\"2016-11-30 05:29:47\", \"call_model\":\"主叫\", \"call_addr\":\"上海\" }, { \"duration\":\"64\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"4008208788\", \"call_time\":\"2016-11-30 05:29:47\", \"call_model\":\"主叫\", \"call_addr\":\"上海\" } , { \"duration\":\"87\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"4008208788\", \"call_time\":\"2016-11-30 05:29:47\", \"call_model\":\"被叫\", \"call_addr\":\"上海\" },{ \"duration\":\"16\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-29 18:23:53\", \"call_model\":\"主叫\", \"call_addr\":\"上海\" },{ \"duration\":\"35\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-29 18:23:53\", \"call_model\":\"主叫\", \"call_addr\":\"上海\" } ,{ \"duration\":\"35\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-29 18:23:53\", \"call_model\":\"主叫\", \"call_addr\":\"上海\" } ]";
+		String detailJson="[{ \"duration\":\"16\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-29 18:23:53\", \"format_call_model\":\"被叫\", \"call_addr\":\"上海\" }, { \"duration\":\"153\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"4008208788\", \"call_time\":\"2016-11-30 05:29:47\", \"format_call_model\":\"主叫\", \"call_addr\":\"上海\" },\n" +
+				"{ \"duration\":\"356\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"4008208788\", \"call_time\":\"2016-11-30 05:29:47\", \"format_call_model\":\"被叫\", \"call_addr\":\"上海\" },\n" +
+				"{ \"duration\":\"98\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"4008208788\", \"call_time\":\"2016-11-30 05:29:47\", \"format_call_model\":\"主叫\", \"call_addr\":\"上海\" },\n" +
+				"{ \"duration\":\"153\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-30 05:29:47\", \"format_call_model\":\"被叫\", \"call_addr\":\"上海\" },\n" +
+				"{ \"duration\":\"86\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-29 18:23:53\", \"format_call_model\":\"主叫\", \"call_addr\":\"上海\" },{ \"duration\":\"86\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"11224875\", \"call_time\":\"2016-11-29 18:23:53\", \"format_call_model\":\"主叫\", \"call_addr\":\"上海\" },{ \"duration\":\"86\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"98765412\", \"call_time\":\"2016-11-29 18:23:53\", \"format_call_model\":\"主叫\", \"call_addr\":\"上海\" },{ \"duration\":\"86\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"145875645\", \"call_time\":\"2016-11-29 18:23:53\", \"format_call_model\":\"主叫\", \"call_addr\":\"上海\" },{ \"duration\":\"86\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-29 18:23:53\", \"format_call_model\":\"主叫\", \"call_addr\":\"上海\" }]";
+//		String detailJson="[ { \"duration\":\"16\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"18575807939\", \"call_time\":\"2016-11-29 18:23:53\", \"format_call_model\":\"被叫\", \"call_addr\":\"上海\" }, { \"duration\":\"153\", \"contact_addr\":\"上海\", \"called_type\":\"国内通话\", \"cost\":\"20\", \"contact\":\"4008208788\", \"call_time\":\"2016-11-30 05:29:47\", \"format_call_model\":\"主叫\", \"call_addr\":\"上海\" } ]";
+		List<CallDetails> callDetailss = JSONArray.parseArray(detailJson, CallDetails.class);
+		AttributeTag tag = new AttributeTag();
+		GrayscaleModel grayscaleModel=new GrayscaleModel();
+
+
+
+		try {
+//			buildAttributeTag(tag,new CallDetailsModel(callDetailss));
+//			System.out.println(JSON.toJSONString(tag));
+
+
+			CallDetailsModel callDetailsModel = new CallDetailsModel(callDetailss);
+			buildTopCallOutStat(grayscaleModel.getTopCallOutStat(),callDetailsModel);
+//			List<TopCallInStat> callInStats=buildTopCallInStat(callDetailsModel);
+//			System.out.println(JSON.toJSON(mainContactTopTens));
+			System.out.println(JSON.toJSON(grayscaleModel.getTopCallOutStat()));
+		/*	buildAttributeTag(tag,callDetailsModel);
+			System.out.println(JSON.toJSONString(tag));
+			List<ContactAreaStat> areaList = new ArrayList<>();
+			buildContactArea(areaList,callDetailsModel);
+			System.out.println(JSON.toJSONString(areaList));
+			List<RiskStat> riskStatList = new ArrayList<>();
+			buildRiskStatAndContactCheck(riskStatList,callDetailsModel);
+			System.out.println(JSON.toJSONString(riskStatList));
+			CallDurationStat callDurationStat = new CallDurationStat();
+			buildCallDurationStat(callDurationStat,callDetailsModel);
+			System.out.println(JSON.toJSONString(callDurationStat));*/
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+}

@@ -1,0 +1,122 @@
+package com.credit.web.model;
+
+import com.alibaba.fastjson.annotation.JSONField;
+
+/**
+ * Created by wangjunling on 2017/3/13.
+ */
+public class ContactCheck
+{
+    private String number;// :联系人号码
+
+    private String name;// :联系人姓名
+
+    private String relation;// :关系
+
+    @JSONField(name = "call_count")
+    private Integer callCount = 0;// :联系次数
+
+    @JSONField(name = "call_out_count")
+    private Integer callOutCount = 0;// :主叫次数
+
+    @JSONField(name = "call_in_count")
+    private Integer callInCount = 0;// :被叫次数
+
+    @JSONField(name = "periodically_contact")
+    private String periodicallyContact;// :周期性联系【是否存在周期性联系】
+
+    @JSONField(name = "call_frequency")
+    private String callFrequency;// :联系频率【互动标识】
+
+    private String active;// :活跃度
+
+    public String getNumber()
+    {
+        return number;
+    }
+
+    public void setNumber(String number)
+    {
+        this.number = number;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
+    }
+
+    public String getRelation()
+    {
+        return relation;
+    }
+
+    public void setRelation(String relation)
+    {
+        this.relation = relation;
+    }
+
+    public Integer getCallCount()
+    {
+        return callCount;
+    }
+
+    public void setCallCount(Integer callCount)
+    {
+        this.callCount = callCount;
+    }
+
+    public Integer getCallOutCount()
+    {
+        return callOutCount;
+    }
+
+    public void setCallOutCount(Integer callOutCount)
+    {
+        this.callOutCount = callOutCount;
+    }
+
+    public Integer getCallInCount()
+    {
+        return callInCount;
+    }
+
+    public void setCallInCount(Integer callInCount)
+    {
+        this.callInCount = callInCount;
+    }
+
+    public String getPeriodicallyContact()
+    {
+        return periodicallyContact;
+    }
+
+    public void setPeriodicallyContact(String periodicallyContact)
+    {
+        this.periodicallyContact = periodicallyContact;
+    }
+
+    public String getCallFrequency()
+    {
+        return callFrequency;
+    }
+
+    public void setCallFrequency(String callFrequency)
+    {
+        this.callFrequency = callFrequency;
+    }
+
+    public String getActive()
+    {
+        return active;
+    }
+
+    public void setActive(String active)
+    {
+        this.active = active;
+    }
+}

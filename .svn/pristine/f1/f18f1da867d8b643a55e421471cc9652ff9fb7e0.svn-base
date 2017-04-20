@@ -1,0 +1,119 @@
+/**
+ * Created by admin on 3/22/2017.
+ */
+
+//保存
+function btnAdd() {
+    $("#batch_data_div").hide();
+    $("#resultSizeP").hide();
+    $(".file").css("min-height",300);
+    var formData = new FormData($("#query_batch_Form")[0]);
+
+    var filePath=$('#file_id').val();
+    if(filePath==""){
+        $("#error_message_p").css("display",'block');
+        $("#error_message").text("请选择文件");
+        return;
+    }
+    var ext=filePath.substr(filePath.lastIndexOf(".")).toLowerCase();
+
+    if (ext!=".txt" && ext!=".csv") {
+        $("#error_message_p").css("display",'block');
+        $("#error_message").text('只支持文件格式txt、csv');
+        $("#error_message").show();
+        $('#file_id').val("");
+        $("#fileTxt").text('选择上传文件');
+        return;
+    }
+    var file=$('#file_id')[0];
+    var byteSize  = file.files[0].size;
+
+
+    if (byteSize > 2097152) {
+        $("#error_message_p").css("display",'block');
+        $("#error_message").text('请上传2M以内的文件');
+        $("#error_message").show();
+        $('#file_id').val("");
+        $("#fileTxt").text('选择上传文件');
+        return;
+    }
+        //$("#error_message").html('上传号码文件（支持文件格式txt、csv）');
+
+    $.ajax({
+        url: "/dun/batch",
+        method: "POST",
+        data: formData,
+        dataType:'json',
+        async:true,
+        contentType: false, //必须false才会避开jQuery对 formdata 的默认处理 XMLHttpRequest会对 formdata 进行正确的处理
+        processData: false, //必须false才会自动加上正确的Content-Type
+        success: function (data) {
+            if (data.result==200) {
+                $("#error_message_p").css("display",'none');
+                var data = data.data;
+                var resultList = data.resultList;
+                var html = '<div class="layout"  >';
+                resultList.forEach(function (value, index, array)
+                {
+                    var str = value.orgName;
+                    if(value.demandName!=null){
+                        str+="·"+value.demandName;
+                    }
+                     html += '<div class="result-block01"> <div class="res-left01"> <img src="/resources/img/dun/'+value.demandImg+'">' +
+                        ' </div> <div class="res-right01"> <h4>'+str+'</h4> ' +
+                        '<h5>电话号码：'+value.phoneNumber+'</h5> </div> </div>';
+                });
+                html+='</div>';
+                if(data.isGreaterThan)
+                {
+                    html+='<div class="adv" id="resultAdv">'+
+                        '<a href="/dun/company"><img src="/resources/img/dun/adv01.jpg"></a>'+
+                    '</div>';
+                }
+                $("#batch_data_div").html(html);
+                $("#batch_data_div").show();
+                $(".file").css("min-height",0);
+                var maxSize = data.maxSize;
+                $("#resultSize").text("从文件中共找到"+maxSize+"个号码");
+                $("#resultSizeP").show();
+
+            }
+            else {
+                $("#error_message_p").css("display",'block');
+                $("#error_message").text("未找到到电话号码");
+                $("#batch_data_div").html('');
+                $("#batch_data_div").hide();
+                $(".file").css("min-height",300);
+                $("#resultSize").hide();
+            }
+        }
+    });
+}
+
+
+$(document).ready(function ()
+{
+    window.document.onkeydown =function(event){
+        var e = event || window.event || arguments.callee.caller.arguments[0];
+        if(e && e.keyCode==13){ // enter 键
+
+            btnAdd();
+            $("#file_id").blur();
+        }
+
+    };
+
+    $("#upload_file").on('click',function ()
+    {
+        btnAdd();
+    });
+    $("#file_id").on('change',function ()
+    {
+        if ($(this).val() != "") {
+
+            $("#fileTxt").text($(this).val());
+        }else{
+            $("#fileTxt").text('选择上传文件');
+        }
+    });
+});

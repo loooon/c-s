@@ -1,0 +1,23 @@
+ALTER TABLE tb_admin MODIFY  create_time  timestamp not null DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE tb_admin MODIFY  update_time  timestamp not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE tb_site_resource MODIFY  create_time  timestamp not null DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE tb_site_resource MODIFY  update_time  timestamp not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE tb_user_permission MODIFY  create_date  timestamp not null DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE tb_user_permission MODIFY  update_time  timestamp not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+
+DROP TABLE IF EXISTS tb_user_grayscale_stat_variable;
+CREATE TABLE tb_user_grayscale_stat_variable
+(
+  id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  variable_date VARCHAR(64) NOT NULL,
+  variable_time VARCHAR(64) NOT NULL,
+  user_vkey VARCHAR(255) NOT NULL,
+  user_id INT(11) NOT NULL,
+  update_time DATETIME,
+  create_time DATETIME NOT NULL,
+  variable_dun VARCHAR(64) DEFAULT 'cn' NOT NULL,
+  variable_name VARCHAR(64) DEFAULT '' NOT NULL
+)ENGINE=MYISAM DEFAULT CHARSET=utf8 COMMENT='用户染黑度统计变量';

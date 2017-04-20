@@ -1,0 +1,159 @@
+var RSF = {
+    regist: function (t, e) {
+        e = e || function () {
+            };
+        for (var i = t.split("."), n = window, s = 0; s < i.length; s++) {
+            if (s != i.length - 1) "undefined" == typeof n[i[s]] && (n[i[s]] = {}); else {
+                if ("undefined" != typeof n[i[s]])throw t + "命名空间重复,请修改！";
+                n[i[s]] = e
+            }
+            n = n[i[s]]
+        }
+    }, log: function (t) {
+        "undefined" == typeof console || console.log(t)
+    }, callIndex: 0, callBacks: [], addCallback: function (t) {
+        var e = ++this.callIndex;
+        return this.callBacks[e] = t, e
+    }, excuteCallback: function (t) {
+        this.callBacks[t] && this.callBacks[t]()
+    }, get_json_cross_domain: function (t, e, i) {
+        var n = this.addCallback(i);
+        t += -1 == t.indexOf("?") ? "?" : "&";
+        for (k in e)t += k + "=" + encodeURIComponent(e[k]) + "&";
+        t += "callback=" + encodeURIComponent("RSF.callBacks[" + n + "]");
+        var s = document.createElement("script");
+        s.type = "text/javascript", s.async = !0, s.src = t, document.body.appendChild(s)
+    }, getKeys: function (t) {
+        var e = [];
+        for (k in t)e.push(k);
+        return e
+    }, copyJson: function (t) {
+        var e = {};
+        for (k in t)e[k] = t[k];
+        return e
+    }, deepCopyJson: function (t, e) {
+        if ("object" == typeof t) {
+            if (t instanceof Array) {
+                e || (e = new Array);
+                for (var i = t.length, n = 0; i > n; n++)"object" != typeof t[n] ? e[n] = t[n] : (e[n] = t[n] instanceof Array ? new Array : new Object, this.deepCopyJson(t[n], e[n]))
+            } else {
+                e || (e = new Object);
+                for (var s in t)"object" != typeof t[n] ? e[s] = t[s] : (e[s] = t[s] instanceof Array ? new Array : new Object, this.deepCopyJson(t[s], e[s]))
+            }
+            return e
+        }
+        return t
+    }, getCookie: function (t) {
+        for (var e = document.cookie.split("; "), i = 0; i < e.length; i++) {
+            var n = e[i].split("=");
+            if (n[0] == t)return n[1] || ""
+        }
+        return ""
+    }, setCookie: function (t, e, i, n, s, o) {
+        var r = new Date;
+        r.setTime(r.getTime() + i), document.cookie = escape(t) + "=" + escape(e) + (r ? "; expires=" + r.toGMTString() : "") + (n ? "; path=" + n : "/") + (s ? "; domain=" + s : "") + (o ? "; secure" : "")
+    }, getParent: function (t, e, i) {
+        t.extend = e, t.extend.apply(t, i), t.extend = null, delete t.extend
+    }
+};
+
+RSF.regist("Credit.Login"), Credit.Login = function () {
+    this.username = $("#username"), this.password = $("#password"), this.email = $("#email"), this.loginDiv = $(".login-d"), this.getPwdDiv = $(".pwd-d"), this.sendPwdDiv = $(".get-d")
+}, Credit.Login.prototype = {
+    init: function () {
+        try {
+            this.getbackground()
+        } catch (t) {
+        }
+        $(".login-d .login").click(this.loginCheck.bind(this)), $(".login-d input").keydown(function (t) {
+            13 == t.which && this.loginCheck()
+        }.bind(this)), $("#getPwd").click(function () {
+            this.loginDiv.hide(), this.getPwdDiv.show()
+        }.bind(this)), $(".pwd-d .getpwd").click(function () {
+            var t = this.email.val();
+            /*$.getJSON("", {action: "sendEmail", username: t}, function (t) {
+                302 == t.code && $(".pwd-d .error span").show(), 0 == t.code && ($(".get-d .tr3").html(t.message), this.sendPwdDiv.show(), this.getPwdDiv.hide())
+            }.bind(this))*/
+            $.ajax({
+                url: "password",
+                method:"POST",
+                // dataType: "json",
+                timeout: 5e3,
+                data: {userName: t},
+                error: function () {
+                    // $(".login").attr("value", "登录")
+                },
+                success: function (t) {
+                    if(t.statusCode!=1)
+                    {
+                        $(".pwd-d .error span").html(t.statusMessage);
+                        $(".pwd-d .error span").show();
+                    }else
+                        {
+                            $(".get-d .tr3").html(t.statusMessage);
+                            $(".get-d").show();
+                            $(".pwd-d").hide();
+                        }
+                }
+            })
+
+        }.bind(this)), $("#back-login").click(function () {
+            $(".login-d .error span").hide(), this.getPwdDiv.hide(), this.loginDiv.show()
+        }.bind(this)), $(".get-d .login-button").click(function () {
+            this.sendPwdDiv.hide(), this.loginDiv.show()
+        }.bind(this))
+    }, loginCheck: function () {
+        var t = this.username.val(), e = this.password.val();
+        $(".login").attr("value", "登录中..."), $.ajax({
+            url: "login",
+            method:"POST",
+            // dataType: "json",
+            timeout: 5e3,
+            data: {name: t, password: e},
+            error: function () {
+                $(".login").attr("value", "登录")
+            },
+            success: function (t) {
+                $(".login").attr("value", "登录"), 1 == t.statusCode ? window.location.href = "/digest/alldata" : ($(".login-d .error span").html(t.statusMessage), $(".login-d .error span").show())
+            }
+        })
+    }, getbackground: function () {
+        particlesJS("particles-js", {
+            particles: {
+                number: {value: 80, density: {enable: !0, value_area: 800}},
+                color: {value: "#ffffff"},
+                shape: {
+                    type: "circle",
+                    stroke: {width: 0, color: "#000000"},
+                    polygon: {nb_sides: 5},
+                    image: {src: "img/github.svg", width: 100, height: 100}
+                },
+                opacity: {value: .5, random: !1, anim: {enable: !1, speed: 1, opacity_min: .1, sync: !1}},
+                size: {value: 3, random: !0, anim: {enable: !1, speed: 40, size_min: .1, sync: !1}},
+                line_linked: {enable: !0, distance: 150, color: "#ffffff", opacity: .4, width: 1},
+                move: {
+                    enable: !0,
+                    speed: 6,
+                    direction: "none",
+                    random: !1,
+                    straight: !1,
+                    out_mode: "out",
+                    bounce: !1,
+                    attract: {enable: !1, rotateX: 600, rotateY: 1200}
+                }
+            },
+            interactivity: {
+                detect_on: "canvas",
+                events: {onhover: {enable: !0, mode: "grab"}, onclick: {enable: !0, mode: "push"}, resize: !0},
+                modes: {
+                    grab: {distance: 140, line_linked: {opacity: 1}},
+                    bubble: {distance: 400, size: 40, duration: 2, opacity: 8, speed: 3},
+                    repulse: {distance: 200, duration: .4},
+                    push: {particles_nb: 4},
+                    remove: {particles_nb: 2}
+                }
+            },
+            retina_detect: !0
+        })
+    }
+};

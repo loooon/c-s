@@ -1,0 +1,103 @@
+package com.credit.web.model;
+
+/**
+ * Created by wangjunling on 2017/3/13.
+ */
+public class ContactArea
+{
+    private String contactAddr;
+
+    private Integer contactCount;
+
+    private Integer callOutCount;
+
+    private Integer callInCount;
+
+    private String callOutDuration;
+
+    private String callInDuration;
+
+    private String callOutRate;
+
+    private String callInRate;
+
+    public String getContactAddr()
+    {
+        return contactAddr;
+    }
+
+    public void setContactAddr(String contactAddr)
+    {
+        this.contactAddr = contactAddr;
+    }
+
+    public Integer getContactCount()
+    {
+        return contactCount;
+    }
+
+    public void setContactCount(Integer contactCount)
+    {
+        this.contactCount = contactCount;
+    }
+
+    public Integer getCallOutCount()
+    {
+        return callOutCount;
+    }
+
+    public void setCallOutCount(Integer callOutCount)
+    {
+        this.callOutCount = callOutCount;
+    }
+
+    public Integer getCallInCount()
+    {
+        return callInCount;
+    }
+
+    public void setCallInCount(Integer callInCount)
+    {
+        this.callInCount = callInCount;
+    }
+
+    public String getCallOutDuration()
+    {
+        return callOutDuration;
+    }
+
+    public void setCallOutDuration(String callOutDuration)
+    {
+        this.callOutDuration = callOutDuration;
+    }
+
+    public String getCallInDuration()
+    {
+        return callInDuration;
+    }
+
+    public void setCallInDuration(String callInDuration)
+    {
+        this.callInDuration = callInDuration;
+    }
+
+    public String getCallOutRate()
+    {
+        return callOutRate;
+    }
+
+    public void setCallOutRate(String callOutRate)
+    {
+        this.callOutRate = callOutRate;
+    }
+
+    public String getCallInRate()
+    {
+        return callInRate;
+    }
+
+    public void setCallInRate(String callInRate)
+    {
+        this.callInRate = callInRate;
+    }
+}

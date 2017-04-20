@@ -1,0 +1,24 @@
+package com.credit.web.controller;
+
+import com.credit.entity.DunNumberDist;
+import com.credit.service.DunNumberDistService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+/**
+ * Created by Michael Chan on 3/24/2017.
+ */
+@Controller("/ddd")
+public class DunNumberDistController
+{
+    @Autowired
+    private DunNumberDistService<DunNumberDist> dunNumberDistService;
+
+    @RequestMapping(value = "/dist", method = RequestMethod.GET)
+    public String numberDist()
+    {
+        return "dun/dist";
+    }
+}

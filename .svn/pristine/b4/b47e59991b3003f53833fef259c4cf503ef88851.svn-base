@@ -1,0 +1,215 @@
+package com.credit.entity;
+
+import javax.persistence.*;
+import java.util.Date;
+
+/**
+ * Created by Michael Chan on 4/13/2017.
+ */
+@Entity
+@Table(name = "tb_query_log")
+public class QueryLog
+{
+    public static int QUERY_SOURCE = 1;             //'查询类型',关联site_resource_id
+
+    public static int QUERY_TYPE_API = 0;           //'查询来源:0-API;1-界面'
+
+    public static int QUERY_TYPE_PAGE = 1;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "lid")
+    private Integer lid;
+
+    @Column(name = "vkey")
+    private String vkey;
+
+    @Column(name = "number")
+    private String number;
+
+    @Column(name = "uname")
+    private String uname;
+
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "idcard")
+    private String idcard;
+
+    @Column(name = "imei")
+    private String imei;
+
+    @Column(name = "imsi")
+    private String imsi;
+
+    @Column(name = "apply_date")
+    private Date applyDate;
+
+    @Column(name = "query_time")
+    private Date queryTime;
+
+    @Column(name = "query_type")
+    private Integer queryType;
+
+    @Column(name = "query_source")
+    private Integer querySource;
+
+    @Column(name = "result_code")
+    private Integer resultCode;
+
+    @Column(name = "elapsed_time")
+    private Integer elapsedTime;
+
+    @Column(name = "create_time")
+    private Date createTime;
+
+    public Integer getLid()
+    {
+        return lid;
+    }
+
+    public void setLid(Integer lid)
+    {
+        this.lid = lid;
+    }
+
+    public String getVkey()
+    {
+        return vkey;
+    }
+
+    public void setVkey(String vkey)
+    {
+        this.vkey = vkey;
+    }
+
+    public String getNumber()
+    {
+        return number;
+    }
+
+    public void setNumber(String number)
+    {
+        this.number = number;
+    }
+
+    public String getUname()
+    {
+        return uname;
+    }
+
+    public void setUname(String uname)
+    {
+        this.uname = uname;
+    }
+
+    public String getPhone()
+    {
+        return phone;
+    }
+
+    public void setPhone(String phone)
+    {
+        this.phone = phone;
+    }
+
+    public String getIdcard()
+    {
+        return idcard;
+    }
+
+    public void setIdcard(String idcard)
+    {
+        this.idcard = idcard;
+    }
+
+    public String getImei()
+    {
+        return imei;
+    }
+
+    public void setImei(String imei)
+    {
+        this.imei = imei;
+    }
+
+    public String getImsi()
+    {
+        return imsi;
+    }
+
+    public void setImsi(String imsi)
+    {
+        this.imsi = imsi;
+    }
+
+    public Date getApplyDate()
+    {
+        return applyDate;
+    }
+
+    public void setApplyDate(Date applyDate)
+    {
+        this.applyDate = applyDate;
+    }
+
+    public Date getQueryTime()
+    {
+        return queryTime;
+    }
+
+    public void setQueryTime(Date queryTime)
+    {
+        this.queryTime = queryTime;
+    }
+
+    public Integer getQueryType()
+    {
+        return queryType;
+    }
+
+    public void setQueryType(Integer queryType)
+    {
+        this.queryType = queryType;
+    }
+
+    public Integer getQuerySource()
+    {
+        return querySource;
+    }
+
+    public void setQuerySource(Integer querySource)
+    {
+        this.querySource = querySource;
+    }
+
+    public Integer getResultCode()
+    {
+        return resultCode;
+    }
+
+    public void setResultCode(Integer resultCode)
+    {
+        this.resultCode = resultCode;
+    }
+
+    public Integer getElapsedTime()
+    {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(Integer elapsedTime)
+    {
+        this.elapsedTime = elapsedTime;
+    }
+
+    public Date getCreateTime()
+    {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime)
+    {
+        this.createTime = createTime;
+    }
+}

@@ -1,0 +1,86 @@
+package com.credit.web.model;
+
+import com.alibaba.fastjson.annotation.JSONField;
+
+/**
+ * Created by Michael Chan on 3/13/2017.
+ */
+public class TopCallInStat
+{
+    private String number;// 联系人号码【号码】
+
+    @JSONField(name = "call_in_count")
+    private Integer callInCount;// 被叫次数
+
+    @JSONField(name = "callInDuration")
+    private Integer callInDuration;// 被叫总时长
+
+    @JSONField(name = "callInRate")
+    private String callInRate;// 被叫占比
+
+    @JSONField(name = "periodicallyContact")
+    private String periodicallyContact;// 周期性联系【是否存在周期性联系】
+
+    @JSONField(name = "call_frequency")
+    private String callFrequency;// 联系频率【互动标识】
+
+    public String getNumber()
+    {
+        return number;
+    }
+
+    public void setNumber(String number)
+    {
+        this.number = number;
+    }
+
+    public Integer getCallInCount()
+    {
+        return callInCount;
+    }
+
+    public void setCallInCount(Integer callInCount)
+    {
+        this.callInCount = callInCount;
+    }
+
+    public Integer getCallInDuration()
+    {
+        return callInDuration;
+    }
+
+    public void setCallInDuration(Integer callInDuration)
+    {
+        this.callInDuration = callInDuration;
+    }
+
+    public String getCallInRate()
+    {
+        return callInRate;
+    }
+
+    public void setCallInRate(String callInRate)
+    {
+        this.callInRate = callInRate;
+    }
+
+    public String getPeriodicallyContact()
+    {
+        return periodicallyContact;
+    }
+
+    public void setPeriodicallyContact(String periodicallyContact)
+    {
+        this.periodicallyContact = periodicallyContact;
+    }
+
+    public String getCallFrequency()
+    {
+        return callFrequency;
+    }
+
+    public void setCallFrequency(String callFrequency)
+    {
+        this.callFrequency = callFrequency;
+    }
+}

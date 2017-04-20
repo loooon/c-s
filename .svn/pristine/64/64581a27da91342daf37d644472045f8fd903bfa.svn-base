@@ -1,0 +1,209 @@
+package com.credit.web.interceptor;
+
+import java.util.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+
+import com.credit.common.util.time.TimeUtil;
+import com.credit.common.web.session.UserSession;
+import com.credit.common.web.session.UserSessionFactory;
+import com.credit.entity.*;
+import com.credit.service.*;
+import com.credit.web.util.CallDetailUtil;
+import com.credit.web.util.LogUtil;
+
+/**
+ * Created by Michael Chan on 3/31/2017.
+ */
+public class AccessLogInterceptor extends HandlerInterceptorAdapter
+{
+    public static final Logger logger = LoggerFactory.getLogger(AccessLogInterceptor.class);
+
+
+    @Resource
+    private AccessLogService<AccessLog> accessLogService;
+
+    @Resource
+    private QueryLogService<QueryLog> queryLogService;
+
+    @Resource
+    private QueryCallDetailsService<QueryCallDetails> queryCallDetailsService;
+
+    @Resource
+    private QueryContactService<QueryContact> queryContactService;
+
+    @Resource
+    private UserPermissionService<UserPermission> userPermissionService;
+
+    @Resource
+    private UserService<User> userService;
+
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception
+    {
+            long startTime = (Long)request.getAttribute("startTime");
+            String tValues = request.getParameter("t");
+            String vkey = request.getParameter("vkey");
+            String number= request.getParameter("number");
+            String uname = request.getParameter("name");
+            String phone = request.getParameter("phone");
+            String idcard = request.getParameter("idcard");
+            String imei = request.getParameter("imei");
+            String imsi = request.getParameter("imsi");
+            String apply_date = request.getParameter("apply_date");
+
+            String requestUri = request.getServletPath();
+            if (StringUtils.isNotBlank(tValues))
+            {
+                requestUri += "?t=" + tValues;
+            }
+
+            Date applyDate = null;
+            if (StringUtils.isNotBlank(apply_date))
+            {
+                applyDate = TimeUtil.parse(apply_date, "yyyy-MM-dd");
+            }
+            if (StringUtils.isBlank(vkey))
+            {
+                UserSession userSession = UserSessionFactory.getUserSession(request);
+                String name = userSession.getName();
+                User user = userService.searchUserByName(name);
+                vkey = user.getvKey();
+            }
+
+            String file_charset = request.getParameter("file_charset");
+            Date query_time = new Date();
+//            Integer query_type = 3;                 //'查询类型',关联site_resource_id
+//            Integer query_source = 0;               //'查询来源:0-API;1-界面',
+//            Integer result_code =200;               //'查询结果编码',
+            long endTime = System.currentTimeMillis();
+            long executeCostTime = endTime - startTime;
+
+            QueryLog queryLog = new QueryLog();
+            queryLog.setVkey(vkey);
+            queryLog.setNumber(number);
+            queryLog.setUname(uname);
+            queryLog.setPhone(phone);
+            queryLog.setIdcard(idcard);
+            queryLog.setImei(imei);
+            queryLog.setImsi(imsi);
+            queryLog.setApplyDate(applyDate);
+            queryLog.setQueryTime(query_time);
+//            queryLog.setQueryType(query_type);
+
+            queryLog.setResultCode(1);
+            queryLog.setElapsedTime((int) executeCostTime);
+
+            SiteResource siteResource = userPermissionService.searchSiteResourceByPath(requestUri);
+            if (siteResource != null)
+            {
+                queryLog.setQueryType(siteResource.getResourceId());
+                queryLog.setQuerySource(QueryLog.QUERY_TYPE_API);
+            }else {
+                queryLog.setQueryType(0);
+                queryLog.setQuerySource(QueryLog.QUERY_TYPE_PAGE);
+            }
+            QueryLog queryLog1 = queryLogService.save(queryLog);
+
+            String call_details = request.getParameter("call_details");
+            List<QueryCallDetails> queryCallDetailss = LogUtil.readCallDetailJsonArray(call_details,queryLog1.getLid());
+            if (CollectionUtils.isNotEmpty(queryCallDetailss))
+            {
+                queryCallDetailsService.save(queryCallDetailss);
+            }
+
+            String contactsJson = request.getParameter("contacts");
+            Map paramMap = request.getParameterMap();
+            Set<String> keys = paramMap.keySet();
+
+            List<QueryContact> pageQueryContacts = new ArrayList<>() ;
+            for(int i =0;i<keys.size();i++)
+            {
+                if (keys.contains("contactChecks["+i+"].name"))
+                {
+                    QueryContact queryContact = new QueryContact();
+                    String key_i = "";
+                    String[] cname =  (String[])paramMap.get("contactChecks["+i+"].name");
+                    String[] cnumber =  (String[])paramMap.get("contactChecks["+i+"].number");
+                    String[] crelation =  (String[])paramMap.get("contactChecks["+i+"].relation");
+                    System.out.println(cname);
+                    queryContact.setLid(queryLog1.getLid());
+                    queryContact.setCname(cname[0]);
+                    queryContact.setCnumber(cnumber[0]);
+                    queryContact.setRelation(crelation[0]);
+                    pageQueryContacts.add(queryContact);
+                }
+            }
+            if (CollectionUtils.isNotEmpty(pageQueryContacts))
+            {
+                queryContactService.save(pageQueryContacts);
+            }
+
+            List<QueryContact> queryContacts = LogUtil.readQueryContactJsonArray(contactsJson, queryLog1.getLid());
+            if (CollectionUtils.isNotEmpty(queryContacts))
+            {
+                queryContactService.save(queryContacts);
+            }
+
+            if (file_charset == null)
+            {
+                file_charset = "utf-8";
+            }
+        if (ServletFileUpload.isMultipartContent(request))
+        {
+            MultipartFile multipartFile = CallDetailUtil.getMultipartFile(request, file_charset);
+            if (multipartFile != null)
+            {
+                List<QueryCallDetails> queryCallDetailsList = LogUtil.readFile(multipartFile.getInputStream(), file_charset,queryLog1.getLid());
+                queryCallDetailsService.save(queryCallDetailsList);
+            }
+        }
+
+            /*String responseContentType = response.getContentType();
+            AccessLog accessLog = new AccessLog();
+//            accessLog.setUserName(userName);
+            accessLog.setvKey(vkey);
+            accessLog.setResourceName(requestUri);
+//            accessLog.setParams(JSON.toJSONString(params));
+            accessLog.setResponseType(responseContentType);
+
+            accessLog.setResponseResult("ddd");
+            accessLog.setRequestTime(new Date());
+            accessLog.setCreateTime(new Date());
+            accessLog.setUpdateTime(new Date());*/
+//            accessLogService.saveAccessRecord(accessLog);
+
+
+        super.postHandle(request, response, handler, modelAndView);
+    }
+
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        long startTime = System.currentTimeMillis();
+        request.setAttribute("startTime", startTime);
+        return true;
+    }
+
+    private boolean isLogin(HttpServletRequest request) throws Exception
+    {
+        UserSession userSession = UserSessionFactory.getUserSession(request);
+        return userSession != null;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception
+    {
+        System.out.println("1");
+        super.afterCompletion(request, response, handler, ex);
+    }
+}

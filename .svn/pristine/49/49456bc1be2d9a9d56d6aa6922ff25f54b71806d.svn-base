@@ -1,0 +1,12 @@
+encry.license=/DXyZvde0j+9Es9OZanY+A==
+sms.upload.total=10000
+interface.usage.limit.switch=1
+dun.number.mark.count=1000
+call.detail.mark.count=1000
+sms.upload.url=http://127.0.0.1:5000/sms/parse
+structured.url.prefix=http://127.0.0.1:5000/sms/task/
+structured.url.suffix=/json
+validate.ip.auth=1
+call.details.periodic=1.0
+call.details.frequency.high=2000
+call.details.frequency.low=350

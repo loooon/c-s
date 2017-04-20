@@ -1,0 +1,28 @@
+<%--
+  Created by IntelliJ IDEA.
+  User: Michael Chan
+  Date: 3/8/2017
+  Time: 12:58 PM
+  To change this template use File | Settings | File Templates.
+--%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<div class="m-title">
+    <p class="m-title-t1">通知中心</p>
+</div>
+<div class="m-content">
+    <ul class="list-content">
+
+    </ul>
+    <div class="m-content-p">
+        <div class="pagination">
+        </div>
+    </div>
+</div>
+<script>
+    var creditFrame = new CreditFrame();
+    creditFrame.init();
+</script>
+<script>
+    var notice = new Credit.User.Notice();
+    notice.init();
+</script>

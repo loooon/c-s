@@ -1,0 +1,8 @@
+sms.send.url=http://www.ums86.com:8899/sms/Api/Send.do
+sms.username=shpingan
+sms.password=utn20121118
+sms.company.code=008673
+
+sms.expire.second=600
+
+sms.register.template=\u3010\u51ED\u5B89\u4FE1\u7528\u3011\u60A8\u7684\u9A8C\u8BC1\u7801\u4E3A\uFF1A#code#\uFF0C\u8BF7\u5728\u9875\u9762\u4E2D\u8F93\u5165\u5B8C\u6210\u9A8C\u8BC1

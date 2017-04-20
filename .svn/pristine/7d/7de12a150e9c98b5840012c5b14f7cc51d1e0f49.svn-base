@@ -1,0 +1,9 @@
+project.dir=/Users/Fe/coding/workspace/zouxue-workspace/zouxue-all/zouxue-service
+
+database.type=oracle
+database.url=jdbc:oracle:thin:@121.41.31.158:16888:zouxue
+database.userName=zouxue
+database.password=Zouxue888
+database.driverClassName=oracle.jdbc.driver.OracleDriver
+SpringModule.DataSource.Name=dataSource
+dbMaintainer.disableConstraints.enabled=false

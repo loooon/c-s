@@ -1,0 +1,189 @@
+package com.credit.service.cache;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import com.credit.entity.DemandType;
+import com.credit.entity.OrganizationType;
+import com.credit.service.DemandTypeService;
+import com.credit.service.OrganizationTypeService;
+import com.credit.service.impl.DemandTypeServiceImpl;
+import com.credit.service.impl.OrganizationTypeServiceImpl;
+import com.google.common.collect.Maps;
+import org.apache.log4j.spi.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.credit.common.cache.AbstractCache;
+import com.credit.common.cache.CacheFactory;
+import com.credit.common.context.BeanFactory;
+import com.credit.common.exception.ServiceException;
+import com.credit.entity.NumberTag;
+import com.credit.service.NumberTagService;
+import com.credit.service.impl.NumberTagServiceImpl;
+
+/**
+ * Created by Michael Chan on 3/9/2017.
+ */
+public class NumberTagCache
+{
+    private static final Logger logger = LoggerFactory.getLogger(NumberTagCache.class);
+
+    private static final String NUMBER_TAG_SERVICE_NAME = "numberTagService";
+    private static final String ORGANIZATION_TYPE_SERVICE_NAME = "organizationTypeService";
+    private static final String DEMAND_TYPE_SERVICE_NAME = "demandTypeService";
+
+    private NumberTagService<NumberTag> numberTagService;
+
+    private OrganizationTypeService<OrganizationType> organizationTypeService;
+
+    private DemandTypeService<DemandType> demandTypeService;
+
+    private static final String NUMBER_TAG = "number_tag";
+
+    private static final String ORGANIZATION_TYPE = "organization_type";
+
+    private static final String DEMAND_TYPE = "demand_type";
+
+    private static final Map<Integer,String> ORGANIZATION_TYPE_MAP= Maps.newHashMap();
+    private static final Map<Integer,String> DEMAND_TYPE_MAP= Maps.newHashMap();
+
+    private AbstractCache<String, Object> cache;
+
+    private NumberTagCache()
+    {
+        try
+        {
+            numberTagService = BeanFactory.getBean(NUMBER_TAG_SERVICE_NAME, NumberTagServiceImpl.class);
+            organizationTypeService = BeanFactory.getBean(ORGANIZATION_TYPE_SERVICE_NAME, OrganizationTypeServiceImpl.class);
+            demandTypeService = BeanFactory.getBean(DEMAND_TYPE_SERVICE_NAME, DemandTypeServiceImpl.class);
+        }
+        catch (Exception e)
+        {
+            numberTagService = null;
+            organizationTypeService = null;
+            demandTypeService = null;
+            logger.error("初始化号码标签信息失败!", e);
+        }
+
+        try
+        {
+            cache = CacheFactory.getInstance().newCache(300, TimeUnit.MINUTES, 100000);
+        }
+        catch (Exception e)
+        {
+            cache = null;
+            logger.error("初始化号码标签信息失败!", e);
+        }
+    }
+
+    private static class NumberTagHolder
+    {
+        private static final NumberTagCache instance = new NumberTagCache();
+    }
+
+    public static NumberTagCache getInstance()
+    {
+        return NumberTagCache.NumberTagHolder.instance;
+    }
+
+    public void reloadAll() throws ServiceException
+    {
+        try
+        {
+            if (null == numberTagService)
+            {
+                logger.error("初始化号码标签信息失败!");
+                return;
+            }
+            if (null == organizationTypeService)
+            {
+                logger.error("初始化组织类型信息失败");
+                return;
+            }
+            if (null == demandTypeService)
+            {
+                logger.error("初始化需求类型信息失败");
+                return;
+            }
+            cache.invalidAllCache();
+
+            List<NumberTag> numberTags = numberTagService.searchAll();
+            List<OrganizationType> organizationTypes = organizationTypeService.findAll();
+            List<DemandType> demandTypes = demandTypeService.findAll();
+            if (null != numberTags)
+            {
+                cache.cache(NUMBER_TAG, numberTags);
+            }
+            if (null != organizationTypes)
+            {
+                for (OrganizationType organization:organizationTypes)
+                {
+                    ORGANIZATION_TYPE_MAP.put(organization.getOrgType(),organization.getOrgTypeName());
+                }
+                cache.cache(ORGANIZATION_TYPE, ORGANIZATION_TYPE_MAP);
+            }
+            if (null != demandTypes)
+            {
+                for (DemandType demandType : demandTypes)
+                {
+                    DEMAND_TYPE_MAP.put(demandType.getDemandType(), demandType.getDemandTypeName());
+                }
+                cache.cache(DEMAND_TYPE, DEMAND_TYPE_MAP);
+            }
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "重新加载号码标签信息失败", e);
+        }
+    }
+
+    public List<NumberTag> getNumberTagCacheData() throws ServiceException
+    {
+        try
+        {
+            if (cache.size() == 0)
+            {
+                reloadAll();
+            }
+            return (List<NumberTag>) cache.getAllCaches().get(NUMBER_TAG);
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "从缓存中加载号码标签信息失败", e);
+        }
+    }
+
+    public Map<Integer,String> getOrganizationTypeMapCacheData() throws ServiceException
+    {
+        try
+        {
+            if (cache.size() == 0)
+            {
+                reloadAll();
+            }
+            return (Map<Integer, String>) cache.getAllCaches().get(ORGANIZATION_TYPE);
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "从缓存中加载组织类型信息失败", e);
+        }
+    }
+
+    public Map<Integer,String> getDemandTypeMapCacheData() throws ServiceException
+    {
+        try
+        {
+            if (cache.size() == 0)
+            {
+                reloadAll();
+            }
+            return (Map<Integer, String>) cache.getAllCaches().get(DEMAND_TYPE);
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(ErrorCode.FLUSH_FAILURE, "从缓存中加载需求类型信息失败", e);
+        }
+    }
+}
